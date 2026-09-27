@@ -175,12 +175,12 @@ def main():
     desc_col_x = margin + 2 * col_w + 24  # a little extra breathing room before the copy
 
     # --- Column 1: just the logo, large and centered in its column ---
-    logo_size = 220
+    logo_size = 320
     title_lines = ["JOHNSON", "ECONOMIC", "TIER"]
     title_line_h = 70
     title_block_h = title_line_h * len(title_lines)
 
-    logo_y = col_top + max(0, (title_block_h - logo_size) / 2)
+    logo_y = col_top + (title_block_h - logo_size) / 2
     logo_x = logo_col_x + max(0, (col_w - 40 - logo_size) / 2)
     logo_img = render_brandmark(brandmark, logo_size, INK)
     img.paste(logo_img, (round(logo_x), round(logo_y)), logo_img)
