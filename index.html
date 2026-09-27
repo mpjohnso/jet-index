@@ -41,10 +41,10 @@
 
   header{display:flex; align-items:center; gap:16px; margin-bottom:28px;}
   .brand-link:hover{opacity:0.75;}
-  .logo{width:64px; height:64px; flex:none; color:var(--ink);}
-  .brand-text{padding-top:17px;}
-  .wordmark{font-size:26px; font-weight:700; letter-spacing:0.03em; margin:0; line-height:1.1;}
-  header .tagline{font-size:13.5px; color:var(--sub); font-weight:400; margin-top:3px; letter-spacing:0.01em;}
+  .brand-link{display:grid; grid-template-columns:64px 1fr; column-gap:14px; flex:1; min-width:0; text-decoration:none; color:inherit;}
+  .logo{grid-column:1; grid-row:1; align-self:center; width:64px; height:64px; flex:none; color:var(--ink);}
+  .wordmark{grid-column:2; grid-row:1; align-self:start; font-size:26px; font-weight:700; letter-spacing:0.03em; margin:0; line-height:1.1;}
+  header .tagline{grid-column:2; grid-row:2; align-self:start; font-size:13.5px; color:var(--sub); font-weight:400; margin-top:3px; letter-spacing:0.01em;}
 
   .card{background:var(--panel); border:1px solid var(--line); border-radius:12px;}
 
@@ -223,9 +223,10 @@
 <div class="wrap">
 
   <header>
-    <a href="/" class="brand-link" style="display:flex; align-items:flex-start; gap:14px; flex:1; min-width:0; text-decoration:none; color:inherit;">
+    <a href="/" class="brand-link">
       <svg class="logo" viewBox="0 0 1147 1147" style="color:var(--ink);"><use href="#brandmark"></use></svg>
-      <div class="brand-text"><div class="wordmark">JOHNSON ECONOMIC TIER</div><div class="tagline">JET Index &middot; U.S. market valuation gauge</div></div>
+      <div class="wordmark">JOHNSON ECONOMIC TIER</div>
+      <div class="tagline">JET Index &middot; U.S. market valuation gauge</div>
     </a>
     <a href="/about.html" style="font-size:12px; font-weight:600; color:var(--ink); text-decoration:none; border:1px solid var(--line); border-radius:16px; padding:6px 12px; white-space:nowrap;">What is this?</a>
   </header>
