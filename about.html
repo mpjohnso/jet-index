@@ -21,10 +21,10 @@
   @media (min-width:700px){ .wrap{max-width:760px; padding:32px 28px 60px;} }
   @media (min-width:1000px){ .wrap{max-width:920px;} }
 
-  header{display:flex; align-items:center; gap:12px; margin-bottom:24px;}
-  .logo{width:36px; height:36px; flex:none;}
-  .wordmark{font-size:19px; font-weight:700; letter-spacing:0.03em; margin:0;}
-  header .tagline{font-size:12px; color:var(--sub); font-weight:400; margin-top:1px; letter-spacing:0.01em;}
+  header{display:flex; align-items:center; gap:14px; margin-bottom:26px;}
+  .logo{width:46px; height:46px; flex:none;}
+  .wordmark{font-size:22px; font-weight:700; letter-spacing:0.035em; margin:0;}
+  header .tagline{font-size:12.5px; color:var(--sub); font-weight:400; margin-top:2px; letter-spacing:0.01em;}
 
   .back-link{
     display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600;
@@ -34,11 +34,12 @@
   .back-link:hover{background:var(--bg);}
 
   .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px 22px 24px; margin-bottom:16px; position:relative; overflow:hidden;}
-  .card-mark{position:absolute; top:-18px; right:-18px; width:104px; height:104px; color:var(--ink); opacity:0.05; pointer-events:none;}
-  .footer-mark{display:block; width:18px; height:18px; margin:22px auto 0; color:var(--ink); opacity:0.3;}
+  .card-mark{position:absolute; top:-22px; right:-22px; width:134px; height:134px; color:var(--ink); opacity:0.065; pointer-events:none;}
+  .footer-mark{display:block; width:26px; height:26px; margin:24px auto 0; color:var(--ink); opacity:0.35;}
 
   h1{font-size:24px; font-weight:700; margin:0 0 14px; letter-spacing:0.01em;}
-  h2{font-size:16px; font-weight:600; margin:24px 0 8px;}
+  h2{font-size:16px; font-weight:600; margin:26px 0 9px; display:flex; align-items:center; gap:9px;}
+  .h2-mark{width:17px; height:17px; flex:none; color:var(--ink);}
   p{font-size:14.5px; line-height:1.65; color:var(--ink); margin:0 0 14px;}
   p:last-child{margin-bottom:0;}
   .lede{font-size:15.5px; line-height:1.65; color:var(--ink);}
@@ -90,10 +91,10 @@
     <h1>What is the JET Index?</h1>
     <p class="lede">The JET Index is a composite measurement tool combining three financial market valuation indicators: the 2&ndash;10 Yield Curve Spread, Shiller PE, and Excess CAPE Yield. Each indicator receives a tier ranking from S (attractive) to F (unattractive), representing market conditions ranging from exceptional buying opportunities to dire situations.</p>
 
-    <h2>Why this exists</h2>
+    <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Why this exists</h2>
     <p>This wasn't built to predict the market or call tops and bottoms. It was built because headlines, viral "the crash is coming" videos, and whatever new metric is trending this month have a way of hijacking good judgment &mdash; pushing people to chase hype near a top or panic-sell near a bottom. The JET Index exists to interrupt that reflex: a small, fixed set of long-standing valuation signals, checked daily, so a reaction can be measured against the facts instead of the news cycle.</p>
 
-    <h2>Purpose and creation</h2>
+    <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Purpose and creation</h2>
     <p>The index was developed to cut through market noise and conflicting expert opinions. Each of the three inputs measures something the other two can't:</p>
     <ul class="reasons">
       <li><b>Shiller PE (CAPE)</b> shows whether stocks are expensive relative to their own decade-plus earnings history &mdash; but says nothing about the alternative, which is holding bonds instead.</li>
@@ -102,7 +103,7 @@
     </ul>
     <p>Together, they combine two valuation lenses (absolute, and relative to rates) with one macro-risk lens, so the index doesn't mistake "statistically cheap" for "safe," or "expensive" for "imminent danger" &mdash; each factor has to earn its own way into a favorable read.</p>
 
-    <h2 id="full-history">The full backtest</h2>
+    <h2 id="full-history"><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>The full backtest</h2>
     <p>Every month since January 1977, run through the same formula &mdash; no cherry-picking, no retroactive tuning. The dashed red lines mark market peaks that came just before a major downturn, so it's easy to see how the reading actually behaved heading into each one. This chart is pulled live from the dashboard's own data, so it always reflects the latest month.</p>
     <div id="chartStatus" class="chart-status">Loading the full backtest&hellip;</div>
     <div id="historyChartBlock" style="display:none;">
@@ -116,7 +117,7 @@
       <div class="peak-legend" id="peakLegend"></div>
     </div>
 
-    <h2>Why these three, and not others</h2>
+    <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Why these three, and not others</h2>
     <p>Several commonly-cited metrics were considered and set aside, each for a specific reason:</p>
     <ul class="reasons">
       <li><b>Trailing or forward P/E</b> &mdash; uses a single year of earnings, which swing sharply with the business cycle. Earnings often collapse right as a recession hits, which can make trailing P/E spike and read "expensive" at the exact moment stocks are actually cheap. CAPE avoids this by averaging ten years of real earnings, smoothing out that false signal.</li>
@@ -127,24 +128,24 @@
       <li><b>Credit spreads</b> &mdash; genuinely useful, and already shown on this site as a separate overlay. But a corporate credit spread measures financial-system stress, not equity valuation. Folding it into the same composite score as the other three would blend two different questions &mdash; "are stocks cheap?" and "is the credit system under strain?" &mdash; into one number, making both harder to read.</li>
     </ul>
 
-    <h2>The underlying idea</h2>
+    <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>The underlying idea</h2>
     <p>All three chosen inputs point back to a single, simple belief: buying stock is buying a claim on a company's future profits, and whether that's a good deal depends on the price paid for those profits relative to the alternatives &mdash; a bond, cash, or just holding value against inflation. Shiller PE asks whether that price is high relative to the company's own earnings history. Excess CAPE Yield asks whether it's high relative to what a safe bond currently pays. The yield curve asks whether the macro environment those future profits depend on is stable or already flashing recession risk. None of the three, on its own, answers the whole question &mdash; together, they approximate it.</p>
 
-    <h2>Why fixed thresholds, not percentiles</h2>
+    <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Why fixed thresholds, not percentiles</h2>
     <p>Each tier boundary in this index is an absolute number, not a percentile rank recalculated as more history accumulates. That distinction matters most for Excess CAPE Yield. Reading "ECY is 4%" has fixed, real-world meaning: it says stocks are priced to return roughly 4 percentage points more per year than a 10-year Treasury &mdash; a concrete relationship you could act on, in any year, with no adjustment needed for how much backtest history exists. A percentile version of the same reading &mdash; "top 15% of months since 1977" &mdash; carries no such fixed meaning: it only ranks the present against a growing, shifting sample, and its bar quietly moves as new decades with different structural conditions get folded in.</p>
     <p>That said, "absolute" still rests on an assumption worth being honest about: that a 10-year Treasury yield is a genuinely risk-free baseline to measure everything else against. It's the safest, most liquid instrument available, but it isn't risk-free in every sense &mdash; it carries inflation risk if policy tolerates higher inflation to manage debt-service costs, and, at the margin, some duration and credit risk that's easy to treat as zero but isn't literally zero. If the "risk-free" rate is somewhat riskier than assumed, the true excess return stocks offer is arguably higher than the reported ECY figure suggests &mdash; stocks would be quietly more attractive than the raw number implies, not less. That's not a flaw to fix with another input; it's a reminder that even an absolute metric is only as solid as the baseline it's measured against.</p>
 
-    <h2>A note on inflation and debt</h2>
+    <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>A note on inflation and debt</h2>
     <div class="note-block">
       <p>Inflation isn't ignored here &mdash; it's already built into two of the three inputs. Shiller PE uses inflation-adjusted prices and a ten-year average of inflation-adjusted earnings, and Excess CAPE Yield explicitly subtracts a <i>real</i> (inflation-adjusted) interest rate rather than a nominal one, which is precisely what lets it stay meaningful whether inflation is running at 1% or 8%.</p>
       <p>What the index can't see, though, is a change in whether that comparison rate is genuinely market-determined. The backtest deliberately starts in 1977 rather than earlier because from 1942&ndash;1951 the U.S. Treasury market wasn't market-driven at all &mdash; the Federal Reserve administratively pegged yields to help finance war debt. If elevated government debt loads ever pushed policy back toward that kind of yield suppression ("financial repression") rather than a market-set rate, the index would have no way to flag it &mdash; it would simply see the resulting yield-curve and rate readings at face value, the same way it does today. That's a limitation worth naming plainly rather than solving with another input.</p>
     </div>
 
-    <h2>Intended use</h2>
+    <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Intended use</h2>
     <p><b>What it shouldn't do:</b> This isn't a signal to buy, sell, or time entries and exits, and it isn't personalized to anyone's goals, time horizon, or risk tolerance. Historical data shows comparable average forward returns across most tiers, with notable divergence only around F tier. Nothing here is investment, legal, or tax advice, and the creator of this site is not a licensed financial advisor &mdash; this is offered for informational and educational purposes only.</p>
     <p><b>What it should do:</b> Help contextualize an emotional reaction against the actual facts, and flag when conditions are genuinely unusual rather than ordinary noise.</p>
 
-    <h2>One way to think about using it</h2>
+    <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>One way to think about using it</h2>
     <p>The two decisions this tends to inform aren't "should I be in the market" &mdash; the evidence above argues against ever fully exiting based on a tier reading &mdash; but two narrower ones, at the margin:</p>
     <ul class="reasons">
       <li><b>How existing exposure is composed.</b> As valuations get stretched and concentrated in a narrow slice of the market, some investors choose to broaden diversification &mdash; tilting toward lower-multiple, more diversified, or non-U.S. exposure &mdash; without reducing overall market exposure. That's a composition change, not a timing call.</li>
