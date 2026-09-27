@@ -20,7 +20,7 @@ import requests
 # --- Configuration -----------------------------------------------------
 # Replace SUBSCRIBERS_CSV_URL once the Google Sheet is published to the web
 # as CSV (File > Share > Publish to web > the Responses sheet > CSV).
-SUBSCRIBERS_CSV_URL = "REPLACE_WITH_PUBLISHED_SHEET_CSV_URL"
+SUBSCRIBERS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxD9yd7fGGOWtrWg4JZbZubzFCIN7ZZlRdr8HBXdiNJOQ6KZYe_w30WD6WBeGAl1wqBI3W3ccxM580/pub?gid=1325128289&single=true&output=csv"
 
 RESEND_API_URL = "https://api.resend.com/emails"
 FROM_EMAIL = "JET Index <onboarding@resend.dev>"
