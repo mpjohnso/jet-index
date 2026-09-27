@@ -104,6 +104,23 @@ def render_brandmark(mark, size, color, view_box=1147):
     return img.resize((size, size), Image.LANCZOS)
 
 
+def wrap_text(d, text, font, max_width):
+    """Greedy word-wrap; returns a list of lines that each fit max_width."""
+    words = text.split(' ')
+    lines = []
+    cur = ''
+    for w in words:
+        trial = f'{cur} {w}'.strip()
+        if d.textlength(trial, font=font) <= max_width or not cur:
+            cur = trial
+        else:
+            lines.append(cur)
+            cur = w
+    if cur:
+        lines.append(cur)
+    return lines
+
+
 def main():
     with open(INDEX_HTML, "r", encoding="utf-8") as f:
         html = f.read()
@@ -142,49 +159,75 @@ def main():
     # Top accent strip in the current tier's color
     d.rectangle([0, 0, W, 10], fill=fill)
 
-    f_wordmark = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansCondensed-Bold.ttf", 34)
-    f_tagline = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansMono-Bold.ttf", 17)
-    f_chip = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansMono-Bold.ttf", 118)
-    f_score = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansCondensed-Bold.ttf", 54)
-    f_tier_word = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansCondensed-Bold.ttf", 29)
-    f_detail = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansMono-Bold.ttf", 21)
+    f_wordmark = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansCondensed-Bold.ttf", 46)
+    f_tagline = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansMono-Bold.ttf", 18)
+    f_chip = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansMono-Bold.ttf", 96)
+    f_score = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansCondensed-Bold.ttf", 50)
+    f_tier_word = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansCondensed-Bold.ttf", 27)
+    f_detail = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansMono-Bold.ttf", 20)
     f_scale = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansMono-Bold.ttf", 18)
     f_url = ImageFont.truetype(f"{FONT_DIR}/DejaVuSansMono-Bold.ttf", 20)
 
-    # --- Header: real brandmark logo + wordmark, same pairing as the site ---
-    logo_size = 68
-    logo_x, logo_y = 72, 50
+    # Two columns, sharing one vertical band: brand block on the left,
+    # the current reading on the right. The color bar spans beneath both.
+    col_top = 88
+    left_x, left_w = 72, 470
+    right_x, right_w = 600, W - 72 - 600
+
+    # --- Left column: logo + the title forced onto 3 lines, then tagline ---
+    logo_size = 108
+    title_lines = ["JOHNSON", "ECONOMIC", "TIER"]
+    title_line_h = 56
+    title_block_h = title_line_h * len(title_lines)
+    title_x = left_x + logo_size + 24
+
+    logo_y = col_top + max(0, (title_block_h - logo_size) / 2)
     logo_img = render_brandmark(brandmark, logo_size, INK)
-    img.paste(logo_img, (logo_x, logo_y), logo_img)
+    img.paste(logo_img, (left_x, round(logo_y)), logo_img)
 
-    word_x = logo_x + logo_size + 20
-    d.text((word_x, logo_y + 6), "JOHNSON ECONOMIC TIER", font=f_wordmark, fill=INK)
-    d.text((word_x, logo_y + 46), "JET Index · U.S. market valuation gauge", font=f_tagline, fill=SUB)
+    for i, line in enumerate(title_lines):
+        d.text((title_x, col_top + i * title_line_h), line, font=f_wordmark, fill=INK)
 
-    # --- Tier chip + score, mid-card ---
-    chip_x, chip_y, chip_w, chip_h = 72, 178, 226, 226
-    d.rounded_rectangle([chip_x, chip_y, chip_x + chip_w, chip_y + chip_h], radius=26, fill=fill)
+    tagline_y = col_top + title_block_h + 18
+    tagline_lines = wrap_text(d, "JET Index · U.S. market valuation gauge", f_tagline, left_w - logo_size - 24)
+    for i, line in enumerate(tagline_lines):
+        d.text((title_x, tagline_y + i * 25), line, font=f_tagline, fill=SUB)
+
+    left_bottom = tagline_y + len(tagline_lines) * 25
+
+    # --- Right column: tier chip + score + context, vertically centered
+    # against the left column's height ---
+    chip_size = 168
+    right_content_h = max(chip_size, 118)
+    chip_y = col_top + max(0, (title_block_h - right_content_h) / 2)
+    chip_x = right_x
+    d.rounded_rectangle([chip_x, chip_y, chip_x + chip_size, chip_y + chip_size], radius=24, fill=fill)
     bbox = d.textbbox((0, 0), tier, font=f_chip)
     tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
     d.text(
-        (chip_x + chip_w / 2 - tw / 2 - bbox[0], chip_y + chip_h / 2 - th / 2 - bbox[1]),
+        (chip_x + chip_size / 2 - tw / 2 - bbox[0], chip_y + chip_size / 2 - th / 2 - bbox[1]),
         tier, font=f_chip, fill=text_on_fill,
     )
 
-    tx = chip_x + chip_w + 44
-    d.text((tx, chip_y + 8), f"{score:.2f} / 7", font=f_score, fill=INK)
-    d.text((tx, chip_y + 70), f"{TIER_WORD[tier]} tier", font=f_tier_word, fill=SUB)
+    tx = chip_x + chip_size + 30
+    t_max_w = right_x + right_w - tx
+    d.text((tx, chip_y - 4), f"{score:.2f} / 7", font=f_score, fill=INK)
+    d.text((tx, chip_y + 54), f"{TIER_WORD[tier]} tier", font=f_tier_word, fill=SUB)
 
-    detail_y = chip_y + 118
+    detail_y = chip_y + 96
     if pe_pct is not None:
-        d.text((tx, detail_y), f"Valuations richer than {pe_pct}% of", font=f_detail, fill=INK)
-        d.text((tx, detail_y + 28), "months since 1977", font=f_detail, fill=INK)
-        detail_y += 62
+        for line in wrap_text(d, f"Valuations richer than {pe_pct}% of months since 1977", f_detail, t_max_w):
+            d.text((tx, detail_y), line, font=f_detail, fill=INK)
+            detail_y += 26
+        detail_y += 8
     d.text((tx, detail_y), f"As of {as_of}", font=f_detail, fill=SUB)
 
-    # --- Full-width tier color bar, mirroring the site's meter ---
+    right_bottom = max(detail_y + 26, chip_y + chip_size)
+
+    # --- Full-width tier color bar, mirroring the site's meter, below both columns ---
     bar_x, bar_w = 72, W - 144
-    bar_y, bar_h = 452, 22
+    bar_y = max(left_bottom, right_bottom) + 42
+    bar_h = 22
     n = len(ORDER)
     seg_w = bar_w / n
     for i, letter in enumerate(ORDER):
