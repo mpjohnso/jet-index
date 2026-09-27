@@ -21,6 +21,8 @@
   body{height:100%; margin:0; background:var(--bg); color:var(--ink); font-family:'Oswald',sans-serif; font-weight:400; -webkit-font-smoothing:antialiased;}
   .mono{font-family:'JetBrains Mono',ui-monospace,monospace;}
   .wrap{max-width:600px; margin:0 auto; padding:26px 18px 50px;}
+  @media (min-width:700px){ .wrap{max-width:760px; padding:32px 28px 60px;} }
+  @media (min-width:1000px){ .wrap{max-width:920px;} }
 
   header{display:flex; align-items:center; gap:12px; margin-bottom:24px;}
   .logo{width:36px; height:36px; flex:none;}
@@ -107,6 +109,12 @@
   .metric-value{font-size:16px; font-weight:700;}
   .metric-card .tier-chip{width:26px; height:26px; font-size:13px; border-radius:7px;}
   .metric-desc{font-size:12px; color:var(--sub); line-height:1.45; margin-top:9px;}
+  .metrics-grid{display:flex; flex-direction:column;}
+  @media (min-width:700px){
+    .metrics-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; align-items:stretch;}
+    .metrics-grid .metric-card{margin-bottom:0; display:flex; flex-direction:column;}
+    .metrics-grid .metric-desc{margin-top:auto; padding-top:9px;}
+  }
 
   .chart-card{padding:16px 14px 10px; margin-bottom:16px;}
   .chart-head{font-size:13.5px; font-weight:500; margin-bottom:2px;}
@@ -167,6 +175,7 @@
 
   <div class="section-title">The three inputs</div>
 
+  <div class="metrics-grid">
   <div class="card metric-card">
     <div class="metric-top">
       <div class="metric-name">2s10s Yield Curve Spread</div>
@@ -195,6 +204,7 @@
     <div class="momentum" id="momEY"></div>
     <div class="meter" id="meterEY"></div>
     <div class="metric-desc">Earnings yield over the real 10Y Treasury yield. Thin premium &mdash; the smallest since 2002.</div>
+  </div>
   </div>
 
   <div class="legend" id="legendRow"></div>
