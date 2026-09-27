@@ -59,9 +59,22 @@
   .score-changed .dot{width:6px; height:6px; border-radius:50%; background:var(--favorable); flex:none;}
   .data-checked-footer{text-align:center; font-size:10px; color:var(--sub); opacity:0.65; margin-top:6px;}
   .hero-actions{display:flex; align-items:center; gap:10px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+  .share-wrap{position:relative;}
   .share-btn{font-size:12px; font-weight:600; color:var(--ink); background:none; border:1px solid var(--line); border-radius:16px; padding:6px 14px; cursor:pointer; font-family:'Oswald',sans-serif;}
   .share-btn:active{opacity:0.8;}
   .share-copied{font-size:11.5px; color:var(--favorable); font-weight:600;}
+  .share-menu{
+    position:fixed; z-index:200; min-width:180px;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px;
+    box-shadow:0 6px 20px rgba(22,24,28,0.16); display:flex; flex-direction:column; gap:1px;
+  }
+  .share-menu[hidden]{display:none;}
+  .share-menu-item{
+    display:block; width:100%; text-align:left; font-size:12.5px; font-weight:500; color:var(--ink);
+    background:none; border:none; border-radius:6px; padding:8px 10px; cursor:pointer;
+    font-family:'Oswald',sans-serif; text-decoration:none; box-sizing:border-box;
+  }
+  .share-menu-item:hover{background:var(--bg);}
 
   .meter{position:relative; margin-top:4px;}
   .meter-track{display:flex; height:9px; border-radius:5px; overflow:hidden;}
@@ -231,7 +244,18 @@
     <div class="meter" id="heroMeter"></div>
     <div class="score-changed" id="scoreChanged"></div>
     <div class="hero-actions">
-      <button type="button" class="share-btn" id="shareBtn">Share this reading</button>
+      <div class="share-wrap">
+        <button type="button" class="share-btn" id="shareBtn" aria-haspopup="true" aria-expanded="false">Share this reading</button>
+        <div class="share-menu" id="shareMenu" hidden>
+          <a class="share-menu-item" id="shareX" target="_blank" rel="noopener">Share on X</a>
+          <a class="share-menu-item" id="shareFacebook" target="_blank" rel="noopener">Share on Facebook</a>
+          <a class="share-menu-item" id="shareLinkedIn" target="_blank" rel="noopener">Share on LinkedIn</a>
+          <a class="share-menu-item" id="shareWhatsApp" target="_blank" rel="noopener">Share on WhatsApp</a>
+          <a class="share-menu-item" id="shareSMS">Text a friend</a>
+          <a class="share-menu-item" id="shareEmail">Share via email</a>
+          <button type="button" class="share-menu-item" id="shareCopyBtn">Copy link</button>
+        </div>
+      </div>
       <span class="share-copied" id="shareCopied" aria-live="polite"></span>
     </div>
   </div>
@@ -867,24 +891,78 @@ if(heroPastRuns.length === 0){
 }
 document.getElementById('heroStreak').innerHTML = heroStreakText;
 
-// ---- Share button: native share sheet where available, else copy a pre-filled line, ----
-// else fall back to a pre-filled X/Twitter share intent.
-document.getElementById('shareBtn').addEventListener('click', async function(){
+// ---- Share button: on mobile, jump straight to the OS share sheet (Messages, WhatsApp, ----
+// Mail, etc. all in one native picker -- nothing to build). Everywhere else, show a small
+// menu of the specific channels people actually use to share a link like this.
+(function(){
   const shareText = `JET Index reading: ${heroTier} tier, ${heroScore.toFixed(2)} / 7`;
   const shareUrl = 'https://jetindx.com/';
-  if(navigator.share){
-    try{ await navigator.share({title:'JET Index', text:shareText, url:shareUrl}); return; }
-    catch(e){ /* user cancelled the share sheet, or it's unsupported here -- fall through */ }
+  const shareTextAndUrl = `${shareText} — ${shareUrl}`;
+
+  document.getElementById('shareX').href =
+    `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+  document.getElementById('shareFacebook').href =
+    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+  document.getElementById('shareLinkedIn').href =
+    `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+  document.getElementById('shareWhatsApp').href =
+    `https://wa.me/?text=${encodeURIComponent(shareTextAndUrl)}`;
+  document.getElementById('shareSMS').href =
+    `sms:?body=${encodeURIComponent(shareTextAndUrl)}`;
+  document.getElementById('shareEmail').href =
+    `mailto:?subject=${encodeURIComponent('JET Index reading')}&body=${encodeURIComponent(shareTextAndUrl)}`;
+
+  const btn = document.getElementById('shareBtn');
+  const menu = document.getElementById('shareMenu');
+  const copiedEl = document.getElementById('shareCopied');
+
+  function showCopied(){
+    copiedEl.textContent = 'Link copied';
+    setTimeout(()=>{ copiedEl.textContent=''; }, 2200);
   }
-  try{
-    await navigator.clipboard.writeText(`${shareText} — ${shareUrl}`);
-    const el = document.getElementById('shareCopied');
-    el.textContent = 'Link copied';
-    setTimeout(()=>{ el.textContent=''; }, 2200);
-  }catch(e){
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener');
+  function closeMenu(){
+    menu.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+    window.removeEventListener('scroll', closeMenu, true);
   }
-});
+  function openMenu(){
+    const rect = btn.getBoundingClientRect();
+    menu.style.top = (rect.bottom + 6) + 'px';
+    menu.style.left = rect.left + 'px';
+    menu.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    window.addEventListener('scroll', closeMenu, true);
+  }
+
+  document.getElementById('shareCopyBtn').addEventListener('click', async function(){
+    try{
+      await navigator.clipboard.writeText(shareTextAndUrl);
+      showCopied();
+    }catch(e){
+      window.prompt('Copy this link:', shareTextAndUrl);
+    }
+    closeMenu();
+  });
+
+  menu.querySelectorAll('a.share-menu-item').forEach(a => a.addEventListener('click', closeMenu));
+
+  btn.addEventListener('click', async function(){
+    // Prefer the native share sheet where one exists (mobile Safari/Chrome, some desktop
+    // browsers) -- it already covers Messages, WhatsApp, Mail and more in one OS-native picker.
+    if(navigator.share){
+      try{ await navigator.share({title:'JET Index', text:shareText, url:shareUrl}); return; }
+      catch(e){ return; /* user cancelled the native share sheet */ }
+    }
+    if(menu.hidden) openMenu(); else closeMenu();
+  });
+
+  document.addEventListener('click', function(e){
+    if(!menu.hidden && !e.target.closest('.share-wrap')) closeMenu();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeMenu();
+  });
+})();
 
 const recent36 = monthly.slice(-36);
 const recentPoints = recent36.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
