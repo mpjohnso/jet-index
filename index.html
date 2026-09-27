@@ -280,7 +280,7 @@
   <div class="card chart-card">
     <div class="chart-head">Recent trend, monthly</div>
     <div class="chart-wrap">
-      <svg class="chart-plot" id="plotRecent" viewBox="0 0 560 210" preserveAspectRatio="none"></svg>
+      <svg class="chart-plot" id="plotRecent" viewBox="0 0 560 260" preserveAspectRatio="none"></svg>
       <div class="chart-tooltip" id="plotRecent-tip"></div>
     </div>
     <div class="xlabels" id="xRecent"></div>
@@ -309,22 +309,10 @@
     <div id="compareResults"></div>
   </div>
 
-  <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Full history, month by month</div>
-  <div class="card chart-card">
-    <div class="chart-head">Full history, monthly, backtested</div>
-    <div class="chart-sub">Every month, 1977&ndash;2026, run through the same tier formula. The final point is always the current month's actual reading, not a stale snapshot. Hover or touch the line to see any month's reading.</div>
-    <div class="chart-wrap">
-      <svg class="chart-plot" id="plotLong" viewBox="0 0 560 240" preserveAspectRatio="none"></svg>
-      <div class="chart-tooltip" id="plotLong-tip"></div>
-    </div>
-    <div class="xlabels" id="xLong"></div>
-    <svg class="credit-strip" id="creditStrip" viewBox="0 0 560 14" preserveAspectRatio="none"></svg>
-    <div class="chart-sub" style="margin-top:4px;">Amber/red marks below the chart: months where corporate credit spreads widened fast enough to suggest genuine financial-system stress (see the credit conditions section above).</div>
-    <div class="peak-legend" id="peakLegend"></div>
-  </div>
+  <div class="chart-sub" style="text-align:center; margin:2px 0 0;">Want the full 1977&ndash;2026 backtest, with every recession-preceding market peak marked? <a href="/about.html#full-history" style="color:var(--ink); font-weight:600;">See it on the about page &rarr;</a></div>
 
   <svg class="footer-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
-  <div class="timestamp">Current reading and monthly chart as of September 2026 &middot; annual chart real 1977&ndash;2026</div>
+  <div class="timestamp">Current reading and monthly chart as of September 2026</div>
   <div class="data-checked-footer" id="dataCheckedFooter"></div>
 </div>
 
@@ -802,33 +790,12 @@ document.getElementById('tierLegendGrid').innerHTML = ORDER.map(letter=>{
   </div>`;
 }).join('');
 
-// Market peaks that topped out just before a major decline, for the full-history chart.
-const MARKET_PEAKS = [
-  {ym:'1987-08', label:'Aug 1987 — peak before Black Monday'},
-  {ym:'2000-03', label:'Mar 2000 — dot-com peak'},
-  {ym:'2007-10', label:'Oct 2007 — peak before the financial crisis'},
-  {ym:'2020-02', label:'Feb 2020 — peak before the COVID crash'},
-  {ym:'2022-01', label:'Jan 2022 — peak before the 2022 bear market'}
-];
-
-const allPoints = monthly.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
-const allYms = monthly.map(r=>r[0]);
-// Label years are pinned to their real index (via findYearIdx), and the final label always
-// reflects whatever the latest month's actual year is -- so labels stay accurate even as new
-// years of data get appended, instead of a hardcoded final year.
-const longLabelSpecs = [1977,1990,2000,2010,2020].map(y=>({idx:findYearIdx(allYms,y), text:String(y)}));
-longLabelSpecs.push({idx: allYms.length-1, text: allYms[allYms.length-1].slice(0,4)});
-drawHistoryChart('plotLong','xLong', allPoints, longLabelSpecs, 240, allYms, MARKET_PEAKS);
-document.getElementById('peakLegend').innerHTML =
-  '<span class="peak-swatch"></span>Dashed red lines mark market peaks that came just before a major downturn: '
-  + MARKET_PEAKS.map(p=>p.label).join(' &middot; ');
-
 const recent36 = monthly.slice(-36);
 const recentPoints = recent36.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
 const recentYms = recent36.map(r=>r[0]);
 const recentLabelIdxs = [0,12,24,recentYms.length-1].filter((v,i,a)=>a.indexOf(v)===i);
 const recentLabelSpecs = recentLabelIdxs.map(idx=>({idx, text: monthYearLabelShort(recentYms[idx])}));
-drawHistoryChart('plotRecent','xRecent', recentPoints, recentLabelSpecs, 210, recentYms);
+drawHistoryChart('plotRecent','xRecent', recentPoints, recentLabelSpecs, 260, recentYms);
 
 // ---- Credit-stress overlay ----
 // Not blended into the composite (backtesting showed the spread's *level* mostly dilutes the
@@ -863,28 +830,6 @@ const currentWidening = widen6mo(monthly.length-1);
 const currentCredit = creditStatus(currentWidening);
 const cw = document.getElementById('creditStatusText');
 cw.innerHTML = `<span class="credit-dot" style="background:${CREDIT_DOT[currentCredit.level]}"></span>${currentCredit.label} &middot; ${currentCredit.detail}`;
-
-// Thin strip under the full-history chart marking every amber/red month, so a viewer can see
-// at a glance how rare -- and how correctly targeted -- the flag has been over 45+ years.
-(function drawCreditStrip(){
-  const svg = document.getElementById('creditStrip');
-  const W = 560, H = 14;
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  const n = monthly.length;
-  const padL = 26, padR = 4;
-  const plotW = W - padL - padR;
-  for(let i=0;i<n;i++){
-    const w = widen6mo(i);
-    const st = creditStatus(w);
-    if(st.level === 'calm') continue;
-    const x = padL + (i/(n-1))*plotW;
-    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    rect.setAttribute('x', x); rect.setAttribute('y', 0);
-    rect.setAttribute('width', Math.max(1.2, plotW/n)); rect.setAttribute('height', H);
-    rect.setAttribute('fill', CREDIT_DOT[st.level]);
-    svg.appendChild(rect);
-  }
-})();
 
 // ---- Momentum indicators: direction and magnitude of the last 3 months' movement ----
 // Compares the current month's raw reading to the reading 3 months ago for each input, plus
