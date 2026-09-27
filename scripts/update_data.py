@@ -25,6 +25,8 @@ from datetime import datetime, timezone
 
 import requests
 
+from notify import send_change_notifications
+
 INDEX_HTML = "index.html"
 UA = {"User-Agent": "Mozilla/5.0 (compatible; JETIndexBot/1.0; +https://jetindx.com)"}
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
@@ -192,6 +194,9 @@ def main():
         f.write(html)
 
     print("changed=" + ("true" if changed else "false"))
+
+    if score_changed:
+        send_change_notifications((cur_yc, cur_pe, cur_ecy), (new_yc, new_pe, new_ecy))
 
 
 if __name__ == "__main__":

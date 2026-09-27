@@ -138,6 +138,19 @@
   .hero-mark{position:absolute; top:-18px; right:-18px; width:104px; height:104px; color:var(--ink); opacity:0.055; pointer-events:none;}
   .footer-mark{display:block; width:18px; height:18px; margin:24px auto 0; color:var(--ink); opacity:0.3;}
 
+  .notify-card{padding:16px 18px 18px; margin-bottom:14px;}
+  .notify-title{font-size:14px; font-weight:600; margin-bottom:6px;}
+  .notify-desc{font-size:12px; color:var(--sub); line-height:1.5; margin-bottom:12px;}
+  .notify-form{display:flex; gap:8px;}
+  .notify-input{flex:1; min-width:0; font-size:13px; padding:9px 11px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink);}
+  .notify-input:focus{outline:2px solid var(--ink); outline-offset:1px;}
+  .notify-btn{padding:9px 16px; border:none; border-radius:8px; background:var(--ink); color:#fff; font-family:'Oswald',sans-serif; font-weight:600; font-size:13px; letter-spacing:0.01em; cursor:pointer; white-space:nowrap;}
+  .notify-btn:active{opacity:0.85;}
+  .notify-status{font-size:12px; margin-top:10px; line-height:1.4;}
+  .notify-status.ok{color:var(--favorable); font-weight:600;}
+  .notify-status.err{color:var(--unfavorable); font-weight:600;}
+  @media (max-width:420px){ .notify-form{flex-direction:column;} }
+
   .tier-legend{padding:16px 18px 6px; margin-bottom:14px;}
   .tier-legend-title{font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--sub); margin-bottom:10px;}
   .tier-strip{display:flex; height:6px; border-radius:3px; overflow:hidden; margin-bottom:14px;}
@@ -191,6 +204,16 @@
     </div>
     <div class="meter" id="heroMeter"></div>
     <div class="score-changed" id="scoreChanged"></div>
+  </div>
+
+  <div class="card notify-card">
+    <div class="notify-title">Get notified when the score changes</div>
+    <div class="notify-desc">Leave your email and we'll send you a note whenever the composite reading actually moves &mdash; not a daily check-in, just real changes.</div>
+    <form class="notify-form" id="notifyForm">
+      <input type="email" id="notifyEmail" class="notify-input mono" placeholder="you@email.com" required>
+      <button type="submit" class="notify-btn">Notify me</button>
+    </form>
+    <div class="notify-status" id="notifyStatus"></div>
   </div>
 
   <div class="card tier-legend">
@@ -360,6 +383,36 @@ function formatChecked(iso){
 }
 document.getElementById('scoreChanged').innerHTML = `<span class="dot"></span>Score last changed ${formatChecked(LAST_CHANGED_ISO)}`;
 document.getElementById('dataCheckedFooter').textContent = `Data last checked ${formatChecked(LAST_CHECKED_ISO)}`;
+
+// TODO: replace with the real published Google Form action URL + email field entry ID.
+const NOTIFY_FORM_ACTION = 'REPLACE_WITH_GOOGLE_FORM_ACTION_URL';
+const NOTIFY_EMAIL_ENTRY = 'REPLACE_WITH_ENTRY_ID';
+document.getElementById('notifyForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const emailInput = document.getElementById('notifyEmail');
+  const statusEl = document.getElementById('notifyStatus');
+  const email = emailInput.value.trim();
+  if(!email) return;
+
+  if(NOTIFY_FORM_ACTION.startsWith('REPLACE_')){
+    statusEl.textContent = "Signups aren't wired up yet — check back soon.";
+    statusEl.className = 'notify-status err';
+    return;
+  }
+
+  const data = new FormData();
+  data.append(NOTIFY_EMAIL_ENTRY, email);
+  fetch(NOTIFY_FORM_ACTION, {method:'POST', mode:'no-cors', body:data})
+    .then(()=>{
+      statusEl.textContent = "You're subscribed — we'll email you when the score changes.";
+      statusEl.className = 'notify-status ok';
+      emailInput.value = '';
+    })
+    .catch(()=>{
+      statusEl.textContent = 'Something went wrong — please try again.';
+      statusEl.className = 'notify-status err';
+    });
+});
 setChip('chipYC','D'); renderMeter('meterYC','D');
 setChip('chipPE','F'); renderMeter('meterPE','F');
 setChip('chipEY','E'); renderMeter('meterEY','E');

@@ -23,6 +23,8 @@ jobs:
         run: pip install requests pandas openpyxl xlrd
 
       - name: Fetch latest data and update the dashboard
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: python scripts/update_data.py
 
       - name: Commit and push if anything changed
