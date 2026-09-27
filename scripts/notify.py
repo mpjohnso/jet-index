@@ -17,6 +17,8 @@ import os
 
 import requests
 
+from scoring import TIER_COLOR, TIER_TEXT, TIER_WORD, composite, tier_for_score
+
 # --- Configuration -----------------------------------------------------
 # Replace SUBSCRIBERS_CSV_URL once the Google Sheet is published to the web
 # as CSV (File > Share > Publish to web > the Responses sheet > CSV).
@@ -25,6 +27,10 @@ SUBSCRIBERS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxD9yd7f
 RESEND_API_URL = "https://api.resend.com/emails"
 FROM_EMAIL = "JET Index <onboarding@resend.dev>"
 SITE_URL = "https://jetindx.com"
+# Deep-links straight to the "What's driving this reading" section, since the whole point of
+# the email is to pull people back to the site for the actual explanation rather than trying
+# to reproduce it inline.
+DRIVING_URL = f"{SITE_URL}/#driving"
 
 
 def get_subscribers():
@@ -74,11 +80,40 @@ def send_change_notifications(old, new):
     old_yc, old_pe, old_ecy = old
     new_yc, new_pe, new_ecy = new
 
-    subject = "JET Index: today's reading changed"
+    old_score = composite(old_yc, old_pe, old_ecy)
+    new_score = composite(new_yc, new_pe, new_ecy)
+    old_tier = tier_for_score(old_score)
+    new_tier = tier_for_score(new_score)
+
+    def _chip_cell(tier, score, caption):
+        """One colored tier chip + its caption, as a small standalone table -- table-based
+        layout (not flex/div) so the color block survives Outlook's Word rendering engine,
+        not just Gmail/Apple Mail."""
+        return f"""
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+          <tr><td style="width:64px; height:64px; min-width:64px; background-color:{TIER_COLOR[tier]}; color:{TIER_TEXT[tier]};
+                          border-radius:14px; font-family:'JetBrains Mono',ui-monospace,Menlo,monospace; font-weight:800;
+                          font-size:30px; text-align:center; vertical-align:middle;">{tier}</td></tr>
+        </table>
+        <div style="font-size:11.5px; color:#71757d; margin-top:8px; text-align:center;">{caption}</div>
+        <div style="font-size:12.5px; color:#16181c; font-weight:700; text-align:center;">{score:.2f} / 7</div>
+        """
+
+    subject = f"JET Index: now {new_tier} tier ({TIER_WORD[new_tier]}), {new_score:.2f} / 7"
+
     body_html = f"""
     <div style="font-family:-apple-system,Helvetica,Arial,sans-serif; max-width:480px; margin:0 auto; color:#16181c;">
       <h2 style="margin-bottom:4px; font-size:19px;">The JET Index reading just changed</h2>
       <p style="font-size:13.5px; color:#71757d; margin-top:0;">One or more of the three inputs moved enough to update today's composite reading.</p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+        <tr>
+          <td width="42%" align="center" style="vertical-align:top;">{_chip_cell(old_tier, old_score, 'Before')}</td>
+          <td width="16%" align="center" style="vertical-align:middle; font-size:22px; color:#71757d;">&rarr;</td>
+          <td width="42%" align="center" style="vertical-align:top;">{_chip_cell(new_tier, new_score, 'Now')}</td>
+        </tr>
+      </table>
+
       <table style="width:100%; font-size:13.5px; border-collapse:collapse; margin:18px 0;">
         <tr style="border-bottom:1.5px solid #16181c;">
           <th align="left" style="padding:6px 4px;">Input</th>
@@ -101,7 +136,10 @@ def send_change_notifications(old, new):
           <td style="padding:6px 4px; font-weight:700;">{_fmt(new_ecy, '%')}</td>
         </tr>
       </table>
-      <p><a href="{SITE_URL}" style="display:inline-block; background:#16181c; color:#fff; padding:10px 18px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13.5px;">See the full reading &rarr;</a></p>
+
+      <p style="font-size:13px; color:#16181c; margin-bottom:14px;">Curious what's actually pushing the reading to {new_tier} tier? The site breaks down each input's percentile rank and recent trend, generated live from today's numbers.</p>
+      <p style="text-align:center; margin:0 0 6px;"><a href="{DRIVING_URL}" style="display:inline-block; background:#16181c; color:#fff; padding:11px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13.5px;">See what's driving this reading &rarr;</a></p>
+
       <p style="color:#71757d; font-size:11.5px; margin-top:28px; border-top:1px dashed #e7e2d8; padding-top:12px;">
         You're receiving this because you signed up for JET Index change alerts at {SITE_URL}.
         Reply to this email if you'd like to stop receiving them.
