@@ -120,7 +120,8 @@ def main():
     new_pe = round(cape, 2) if cape is not None else cur_pe
     new_ecy = round(ecy, 2) if ecy is not None else cur_ecy
 
-    if (new_yc, new_pe, new_ecy) != (cur_yc, cur_pe, cur_ecy):
+    score_changed = (new_yc, new_pe, new_ecy) != (cur_yc, cur_pe, cur_ecy)
+    if score_changed:
         html = html.replace(
             m.group(0),
             f"const CURRENT_YC = {new_yc}, CURRENT_PE = {new_pe}, CURRENT_ECY = {new_ecy};",
@@ -174,7 +175,18 @@ def main():
             f"const LAST_CHECKED_ISO = '{now_iso}';\nconst TIER_COLOR =",
             1,
         )
-    changed = True  # the timestamp always advances
+    changed = True  # the "checked" timestamp always advances
+
+    # --- Only stamp "score last changed" when the composite-score inputs actually moved ---
+    if score_changed:
+        if "const LAST_CHANGED_ISO" in html:
+            html = re.sub(r"const LAST_CHANGED_ISO = '[^']*';", f"const LAST_CHANGED_ISO = '{now_iso}';", html)
+        else:
+            html = html.replace(
+                "const TIER_COLOR =",
+                f"const LAST_CHANGED_ISO = '{now_iso}';\nconst TIER_COLOR =",
+                1,
+            )
 
     with open(INDEX_HTML, "w", encoding="utf-8") as f:
         f.write(html)

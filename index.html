@@ -40,8 +40,9 @@
   .hero .verdict{font-size:16.5px; font-weight:500; line-height:1.35;}
   .hero .verdict b{font-weight:700;}
   .hero .score{font-size:12px; color:var(--sub); margin-top:2px;}
-  .data-checked{display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--sub); margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);}
-  .data-checked .dot{width:6px; height:6px; border-radius:50%; background:var(--favorable); flex:none;}
+  .score-changed{display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--sub); margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);}
+  .score-changed .dot{width:6px; height:6px; border-radius:50%; background:var(--favorable); flex:none;}
+  .data-checked-footer{text-align:center; font-size:10px; color:var(--sub); opacity:0.65; margin-top:6px;}
 
   .meter{position:relative; margin-top:4px;}
   .meter-track{display:flex; height:9px; border-radius:5px; overflow:hidden;}
@@ -189,7 +190,7 @@
       </div>
     </div>
     <div class="meter" id="heroMeter"></div>
-    <div class="data-checked" id="dataChecked"></div>
+    <div class="score-changed" id="scoreChanged"></div>
   </div>
 
   <div class="card tier-legend">
@@ -308,10 +309,12 @@
   </div>
   <svg class="footer-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
   <div class="timestamp">Current reading and monthly chart as of September 2026 &middot; annual chart real 1977&ndash;2026</div>
+  <div class="data-checked-footer" id="dataCheckedFooter"></div>
 </div>
 
 <script>
 const LAST_CHECKED_ISO = '2026-09-27T03:38:20Z';
+const LAST_CHANGED_ISO = '2026-09-27T03:38:20Z';
 const TIER_COLOR = {S:'#e0473d',A:'#ef8f1e',B:'#f3cf3d',C:'#4fae59',D:'#63b8de',E:'#2f6fb0',F:'#c92f86'};
 const TIER_TEXT  = {S:'#fff',A:'#fff',B:'#2b2200',C:'#fff',D:'#0b2733',E:'#fff',F:'#fff'};
 const ORDER = ['F','E','D','C','B','A','S']; // worst -> best, left -> right
@@ -349,12 +352,14 @@ document.getElementById('heroScoreText').textContent = `weighted score ${heroSco
 
 setChip('heroChip', heroTier); renderMeterContinuous('heroMeter', heroScore);
 
-(function renderDataChecked(){
-  const d = new Date(LAST_CHECKED_ISO);
+function formatChecked(iso){
+  const d = new Date(iso);
   const dateStr = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', timeZone:'America/Chicago'});
   const timeStr = d.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', timeZone:'America/Chicago', timeZoneName:'short'});
-  document.getElementById('dataChecked').innerHTML = `<span class="dot"></span>Data checked ${dateStr} &middot; ${timeStr}`;
-})();
+  return `${dateStr} · ${timeStr}`;
+}
+document.getElementById('scoreChanged').innerHTML = `<span class="dot"></span>Score last changed ${formatChecked(LAST_CHANGED_ISO)}`;
+document.getElementById('dataCheckedFooter').textContent = `Data last checked ${formatChecked(LAST_CHECKED_ISO)}`;
 setChip('chipYC','D'); renderMeter('meterYC','D');
 setChip('chipPE','F'); renderMeter('meterPE','F');
 setChip('chipEY','E'); renderMeter('meterEY','E');
