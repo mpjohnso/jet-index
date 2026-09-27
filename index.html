@@ -133,6 +133,8 @@
     opacity:0; transition:opacity 0.1s ease; z-index:5;
   }
   .xlabels{display:flex; justify-content:space-between; font-size:10px; color:var(--sub); margin-top:4px;}
+  .peak-legend{font-size:11px; color:var(--sub); line-height:1.6; margin-top:8px;}
+  .peak-swatch{display:inline-block; width:12px; height:0; border-top:1.5px dashed #c0392b; margin-right:6px; vertical-align:middle;}
 
   .hero{position:relative; overflow:hidden;}
   .hero-mark{position:absolute; top:-18px; right:-18px; width:104px; height:104px; color:var(--ink); opacity:0.055; pointer-events:none;}
@@ -298,14 +300,15 @@
   <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Full history, month by month</div>
   <div class="card chart-card">
     <div class="chart-head">Full history, monthly, backtested</div>
-    <div class="chart-sub">Every month, 1977&ndash;2026, run through your exact tier formula. The final point is always this month's actual reading, not a January snapshot. Hover or touch the line to see any month's reading.</div>
+    <div class="chart-sub">Every month, 1977&ndash;2026, run through the same tier formula. The final point is always the current month's actual reading, not a stale snapshot. Hover or touch the line to see any month's reading.</div>
     <div class="chart-wrap">
       <svg class="chart-plot" id="plotLong" viewBox="0 0 560 170" preserveAspectRatio="none"></svg>
       <div class="chart-tooltip" id="plotLong-tip"></div>
     </div>
     <div class="xlabels" id="xLong"></div>
     <svg class="credit-strip" id="creditStrip" viewBox="0 0 560 14" preserveAspectRatio="none"></svg>
-    <div class="chart-sub" style="margin-top:4px;">Amber/red marks: months where corporate credit spreads widened fast enough to suggest genuine financial-system stress (see the credit-conditions note above).</div>
+    <div class="chart-sub" style="margin-top:4px;">Amber/red marks below the chart: months where corporate credit spreads widened fast enough to suggest genuine financial-system stress (see the credit conditions section above).</div>
+    <div class="peak-legend" id="peakLegend"></div>
   </div>
 
   <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Compare two periods</div>
@@ -325,7 +328,7 @@
   </div>
 
   <div class="note">
-    <b>Weighting:</b> the composite now uses 25% yield curve / 37.5% Shiller PE / 37.5% Excess CAPE Yield, not an even three-way split. Backtested against six other weightings across the full 1977&ndash;2026 history: equal weighting missed the 2022 bear market by about as much as leaning harder into the yield curve did (the curve re-steepens right before recessions hit, which makes curve-heavy weightings least defensive exactly when they should be most defensive); dropping Excess CAPE Yield entirely more than doubled false alarms during the calm 2013&ndash;2019 stretch. This weighting was the one that improved on 2022 without adding false alarms elsewhere &mdash; though no combination of these three inputs would have flagged 1987 or the 2008 crisis, both of which were credit and liquidity events rather than valuation or yield-curve ones. Happy to share the full comparison table if useful.
+    <b>Weighting:</b> the composite uses 25% yield curve / 37.5% Shiller PE / 37.5% Excess CAPE Yield, not an even three-way split. Backtested against six other weightings across the full 1977&ndash;2026 history: equal weighting missed the 2022 bear market by about as much as leaning harder into the yield curve did (the curve re-steepens right before recessions hit, which makes curve-heavy weightings least defensive exactly when they should be most defensive); dropping Excess CAPE Yield entirely more than doubled false alarms during the calm 2013&ndash;2019 stretch. This weighting improved on 2022 without adding false alarms elsewhere &mdash; though no combination of these three inputs would have flagged 1987 or the 2008 crisis, both of which were credit and liquidity events rather than valuation or yield-curve ones.
     <br><br>
     <b>Credit-stress overlay:</b> added to address that exact 1987/2008 gap, but deliberately kept separate rather than folded into the score. Blending the credit spread's raw level into the composite made it read as <i>less</i> cautious at nearly every historical peak tested, including 2008 &mdash; because valuations look "cheap" precisely as a credit crisis crashes prices, which is correct for a valuation score but useless as a crisis flag. Its 6-month rate of change is a better-scoped signal: it flagged the 2007&ndash;08 credit crisis within a month of the market's top (16 months before the eventual bottom), stayed quiet through 1987 (correctly &mdash; that was a liquidity event, not a credit one), and showed only a mild wobble in 2022 versus a much sharper move during real crises. It's shown here as its own flag, not a fourth vote in the average.
     <br><br>
@@ -440,7 +443,7 @@ function monthYearLabel(ym){
 // vertical history chart: S at top, F at bottom (matches the site's own precedent), tinted reference bands.
 // `yms`, when provided, is an array of 'yyyy-mm' strings aligned 1:1 with `points`, used to power
 // a hover/touch crosshair that shows the exact month, year, tier and score at any position on the line.
-function drawHistoryChart(plotId, xlabelId, points, labels, height, yms){
+function drawHistoryChart(plotId, xlabelId, points, labels, height, yms, peaks){
   const svg = document.getElementById(plotId);
   const W = 560, H = height;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
@@ -473,6 +476,22 @@ function drawHistoryChart(plotId, xlabelId, points, labels, height, yms){
       svg.appendChild(txt);
     }
   }
+  // Pre-downturn market peaks: a dashed marker at the month the market topped out just
+  // before a major decline, so a viewer can see where the index stood right before each one.
+  if(peaks && peaks.length && yms){
+    peaks.forEach(peak=>{
+      const idx = yms.indexOf(peak.ym);
+      if(idx === -1) return;
+      const px = xOf(idx);
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', px); line.setAttribute('x2', px);
+      line.setAttribute('y1', padTop); line.setAttribute('y2', H - padBottom);
+      line.setAttribute('stroke', '#c0392b'); line.setAttribute('stroke-width', '1.3');
+      line.setAttribute('stroke-dasharray', '3,2'); line.setAttribute('opacity', '0.55');
+      svg.appendChild(line);
+    });
+  }
+
   const path = document.createElementNS('http://www.w3.org/2000/svg','polyline');
   const pts = points.map((p,i)=>`${xOf(i)},${yOf(p.y)}`).join(' ');
   path.setAttribute('points', pts);
@@ -536,7 +555,7 @@ function drawHistoryChart(plotId, xlabelId, points, labels, height, yms){
   }
 }
 
-// ---- tier-scoring functions, matching your JET Index Legend exactly ----
+// ---- tier-scoring functions, matching the JET Index Legend exactly ----
 function scoreYC(v){ return v>=3?7 : v>=2?6 : v>=1?5 : v>=0.5?4 : v>=0.25?3 : v>=0?2 : 1; }
 function scorePE(v){ return v<=10?7 : v<=15?6 : v<=20?5 : v<=24?4 : v<=28?3 : v<=34?2 : 1; }
 function scoreEY(v){ return v>=10?7 : v>=7?6 : v>=5?5 : v>=3?4 : v>=2?3 : v>=1?2 : 1; }
@@ -768,9 +787,21 @@ document.getElementById('tierLegendGrid').innerHTML = ORDER.map(letter=>{
   </div>`;
 }).join('');
 
+// Market peaks that topped out just before a major decline, for the full-history chart.
+const MARKET_PEAKS = [
+  {ym:'1987-08', label:'Aug 1987 — peak before Black Monday'},
+  {ym:'2000-03', label:'Mar 2000 — dot-com peak'},
+  {ym:'2007-10', label:'Oct 2007 — peak before the financial crisis'},
+  {ym:'2020-02', label:'Feb 2020 — peak before the COVID crash'},
+  {ym:'2022-01', label:'Jan 2022 — peak before the 2022 bear market'}
+];
+
 const allPoints = monthly.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
 const allYms = monthly.map(r=>r[0]);
-drawHistoryChart('plotLong','xLong', allPoints, ['1977','1990','2000','2010','2020','2026'], 170, allYms);
+drawHistoryChart('plotLong','xLong', allPoints, ['1977','1990','2000','2010','2020','2026'], 170, allYms, MARKET_PEAKS);
+document.getElementById('peakLegend').innerHTML =
+  '<span class="peak-swatch"></span>Dashed red lines mark market peaks that came just before a major downturn: '
+  + MARKET_PEAKS.map(p=>p.label).join(' &middot; ');
 
 const recent36 = monthly.slice(-36);
 const recentPoints = recent36.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
