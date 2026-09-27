@@ -47,9 +47,6 @@
   ul.reasons{margin:0 0 14px; padding-left:20px;}
   ul.reasons li{font-size:14.5px; line-height:1.65; color:var(--ink); margin-bottom:9px;}
   ul.reasons li:last-child{margin-bottom:0;}
-  .note-block{background:var(--bg); border:1px solid var(--line); border-radius:9px; padding:14px 16px; margin:14px 0;}
-  .note-block p{margin-bottom:10px;}
-  .note-block p:last-child{margin-bottom:0;}
 
   .chart-sub{font-size:11.5px; color:var(--sub); margin-bottom:10px; line-height:1.55;}
   .chart-wrap{position:relative;}
@@ -136,10 +133,8 @@
     <p>That said, "absolute" still rests on an assumption worth being honest about: that a 10-year Treasury yield is a genuinely risk-free baseline to measure everything else against. It's the safest, most liquid instrument available, but it isn't risk-free in every sense &mdash; it carries inflation risk if policy tolerates higher inflation to manage debt-service costs, and, at the margin, some duration and credit risk that's easy to treat as zero but isn't literally zero. If the "risk-free" rate is somewhat riskier than assumed, the true excess return stocks offer is arguably higher than the reported ECY figure suggests &mdash; stocks would be quietly more attractive than the raw number implies, not less. That's not a flaw to fix with another input; it's a reminder that even an absolute metric is only as solid as the baseline it's measured against.</p>
 
     <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>A note on inflation and debt</h2>
-    <div class="note-block">
-      <p>Inflation isn't ignored here &mdash; it's already built into two of the three inputs. Shiller PE uses inflation-adjusted prices and a ten-year average of inflation-adjusted earnings, and Excess CAPE Yield explicitly subtracts a <i>real</i> (inflation-adjusted) interest rate rather than a nominal one, which is precisely what lets it stay meaningful whether inflation is running at 1% or 8%.</p>
-      <p>What the index can't see, though, is a change in whether that comparison rate is genuinely market-determined. The backtest deliberately starts in 1977 rather than earlier because from 1942&ndash;1951 the U.S. Treasury market wasn't market-driven at all &mdash; the Federal Reserve administratively pegged yields to help finance war debt. If elevated government debt loads ever pushed policy back toward that kind of yield suppression ("financial repression") rather than a market-set rate, the index would have no way to flag it &mdash; it would simply see the resulting yield-curve and rate readings at face value, the same way it does today. That's a limitation worth naming plainly rather than solving with another input.</p>
-    </div>
+    <p>Inflation isn't ignored here &mdash; it's already built into two of the three inputs. Shiller PE uses inflation-adjusted prices and a ten-year average of inflation-adjusted earnings, and Excess CAPE Yield explicitly subtracts a <i>real</i> (inflation-adjusted) interest rate rather than a nominal one, which is precisely what lets it stay meaningful whether inflation is running at 1% or 8%.</p>
+    <p>What the index can't see, though, is a change in whether that comparison rate is genuinely market-determined. The backtest deliberately starts in 1977 rather than earlier because from 1942&ndash;1951 the U.S. Treasury market wasn't market-driven at all &mdash; the Federal Reserve administratively pegged yields to help finance war debt. If elevated government debt loads ever pushed policy back toward that kind of yield suppression ("financial repression") rather than a market-set rate, the index would have no way to flag it &mdash; it would simply see the resulting yield-curve and rate readings at face value, the same way it does today. That's a limitation worth naming plainly rather than solving with another input.</p>
 
     <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Intended use</h2>
     <p><b>What it shouldn't do:</b> This isn't a signal to buy, sell, or time entries and exits, and it isn't personalized to anyone's goals, time horizon, or risk tolerance. Historical data shows comparable average forward returns across most tiers, with notable divergence only around F tier. Nothing here is investment, legal, or tax advice, and the creator of this site is not a licensed financial advisor &mdash; this is offered for informational and educational purposes only.</p>
