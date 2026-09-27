@@ -59,7 +59,8 @@
   .score-changed{display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--sub); margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);}
   .score-changed .dot{width:6px; height:6px; border-radius:50%; background:var(--favorable); flex:none;}
   .data-checked-footer{text-align:center; font-size:10px; color:var(--sub); opacity:0.65; margin-top:6px;}
-  .hero-actions{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+  .hero-actions-caption{font-size:11.5px; color:var(--sub); line-height:1.45; margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);}
+  .hero-actions{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:10px;}
   .share-wrap{position:relative;}
   .share-btn{font-size:12px; font-weight:600; color:var(--ink); background:none; border:1px solid var(--line); border-radius:16px; padding:6px 14px; cursor:pointer; font-family:'Oswald',sans-serif; flex:none;}
   .share-btn:active{opacity:0.8;}
@@ -242,6 +243,7 @@
     </div>
     <div class="meter" id="heroMeter"></div>
     <div class="score-changed" id="scoreChanged"></div>
+    <div class="hero-actions-caption">Share this reading, or leave your email to get notified when the score changes &mdash; not a daily check-in, just real changes.</div>
     <div class="hero-actions">
       <div class="share-wrap">
         <button type="button" class="share-btn" id="shareBtn" aria-haspopup="true" aria-expanded="false">Share this reading</button>
