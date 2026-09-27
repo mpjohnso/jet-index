@@ -26,6 +26,7 @@ from datetime import datetime, timezone
 import requests
 
 from notify import send_change_notifications
+from scoring import TIER_WORD, composite, tier_for_score
 
 INDEX_HTML = "index.html"
 UA = {"User-Agent": "Mozilla/5.0 (compatible; JETIndexBot/1.0; +https://jetindx.com)"}
@@ -129,6 +130,22 @@ def main():
             f"const CURRENT_YC = {new_yc}, CURRENT_PE = {new_pe}, CURRENT_ECY = {new_ecy};",
         )
         changed = True
+
+    # --- Refresh the og:/twitter: description meta tags so social previews always ---
+    # show today's actual reading rather than whatever text was last hand-written.
+    score = composite(new_yc, new_pe, new_ecy)
+    tier = tier_for_score(score)
+    as_of = datetime.now(timezone.utc).strftime("%B %Y")
+    social_desc = (
+        f"Current reading: {tier} tier ({TIER_WORD[tier]}), {score:.2f} / 7 as of {as_of}. "
+        f"A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield."
+    )
+    for prop in ('og:description', 'twitter:description'):
+        attr = 'property' if prop.startswith('og:') else 'name'
+        pattern = re.compile(rf'(<meta {attr}="{re.escape(prop)}" content=")[^"]*(")')
+        html, n = pattern.subn(lambda mm: mm.group(1) + social_desc + mm.group(2), html)
+        if n == 0:
+            print(f"[warn] Could not find <meta {attr}=\"{prop}\"> anchor; leaving social preview text untouched.")
 
     # --- Update the three metric-card literal display values ---
     def replace_metric_value(html, name_anchor, new_text):

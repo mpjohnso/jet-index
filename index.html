@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>JET Index</title>
+<meta name="description" content="A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield into one score, backtested to 1977.">
+<link rel="canonical" href="https://jetindx.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="JET Index">
+<meta property="og:title" content="JET Index &mdash; U.S. market valuation gauge">
+<meta property="og:description" content="A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield into one score, backtested to 1977.">
+<meta property="og:url" content="https://jetindx.com/">
+<meta property="og:image" content="https://jetindx.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="JET Index &mdash; U.S. market valuation gauge">
+<meta name="twitter:description" content="A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield into one score, backtested to 1977.">
+<meta name="twitter:image" content="https://jetindx.com/og-image.png">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,9 +54,14 @@
   .hero .verdict{font-size:16.5px; font-weight:500; line-height:1.35;}
   .hero .verdict b{font-weight:700;}
   .hero .score{font-size:12px; color:var(--sub); margin-top:2px;}
+  .hero-streak{font-size:12px; color:var(--sub); line-height:1.45; margin:2px 0 0;}
   .score-changed{display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--sub); margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);}
   .score-changed .dot{width:6px; height:6px; border-radius:50%; background:var(--favorable); flex:none;}
   .data-checked-footer{text-align:center; font-size:10px; color:var(--sub); opacity:0.65; margin-top:6px;}
+  .hero-actions{display:flex; align-items:center; gap:10px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+  .share-btn{font-size:12px; font-weight:600; color:var(--ink); background:none; border:1px solid var(--line); border-radius:16px; padding:6px 14px; cursor:pointer; font-family:'Oswald',sans-serif;}
+  .share-btn:active{opacity:0.8;}
+  .share-copied{font-size:11.5px; color:var(--favorable); font-weight:600;}
 
   .meter{position:relative; margin-top:4px;}
   .meter-track{display:flex; height:9px; border-radius:5px; overflow:hidden;}
@@ -83,6 +102,8 @@
   .period-row .val{font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:600;}
   .compare-explain{margin-top:16px; font-size:12.5px; line-height:1.55; color:var(--ink); border-top:1px solid var(--line); padding-top:14px;}
   .compare-explain b{font-weight:700;}
+  .share-link-btn{display:block; margin-top:12px; font-size:11.5px; font-weight:600; color:var(--ink); background:none; border:1px solid var(--line); border-radius:16px; padding:6px 14px; cursor:pointer; font-family:'Oswald',sans-serif;}
+  .share-link-btn:active{opacity:0.8;}
   .similar-item{display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);}
   .similar-item:last-child{border-bottom:none;}
   .similar-rank{font-family:'JetBrains Mono',ui-monospace,monospace; font-size:16px; font-weight:800; color:var(--sub); flex:none; width:22px;}
@@ -204,10 +225,15 @@
         <div class="verdict">Elevated caution &mdash; markets are priced with a <b>thin margin of safety</b>.</div>
         <div class="score mono" id="heroScoreText"></div>
         <div class="momentum" id="momHero"></div>
+        <div class="hero-streak" id="heroStreak"></div>
       </div>
     </div>
     <div class="meter" id="heroMeter"></div>
     <div class="score-changed" id="scoreChanged"></div>
+    <div class="hero-actions">
+      <button type="button" class="share-btn" id="shareBtn">Share this reading</button>
+      <span class="share-copied" id="shareCopied" aria-live="polite"></span>
+    </div>
   </div>
 
   <div class="card notify-card">
@@ -799,6 +825,67 @@ document.getElementById('tierLegendGrid').innerHTML = ORDER.map(letter=>{
   </div>`;
 }).join('');
 
+// ---- Hero verdict + "time in this tier" streak, both generated live from `monthly` ----
+// so neither one can drift out of sync with the actual current tier the way a hand-written
+// verdict sentence or streak note would.
+const VERDICT_BY_TIER = {
+  S:'Excellent value &mdash; markets are priced with a <b>wide margin of safety</b>.',
+  A:'Strong footing &mdash; valuations leave <b>real room for error</b>.',
+  B:'Good conditions &mdash; a reasonable <b>cushion</b>, nothing stretched.',
+  C:'Fair, ordinary conditions &mdash; <b>no strong signal</b> either way.',
+  D:'Stretched valuations &mdash; the <b>margin of safety is thinning</b>.',
+  E:'Elevated caution &mdash; markets are priced with a <b>thin margin of safety</b>.',
+  F:'Extreme caution &mdash; valuations offer <b>little to no margin of safety</b>.',
+};
+document.querySelector('.hero .verdict').innerHTML = VERDICT_BY_TIER[heroTier];
+
+function tierRuns(){
+  const runs = [];
+  let curTier = null, curStart = 0;
+  monthly.forEach((row,i)=>{
+    const t = nearestTier(composite(row[1],row[2],row[3]));
+    if(t !== curTier){
+      if(curTier !== null) runs.push({tier:curTier, start:curStart, len:i-curStart});
+      curTier = t; curStart = i;
+    }
+  });
+  runs.push({tier:curTier, start:curStart, len:monthly.length-curStart});
+  return runs;
+}
+const heroRuns = tierRuns();
+const heroCurrentRun = heroRuns[heroRuns.length-1];
+const heroPastRuns = heroRuns.slice(0,-1).filter(r=>r.tier===heroTier);
+const heroLongestPast = heroPastRuns.reduce((max,r)=>r.len>max.len?r:max, {len:0});
+const heroStreakStartLabel = monthYearLabel(monthly[heroCurrentRun.start][0]);
+let heroStreakText = `${heroTier} tier for ${heroCurrentRun.len} month${heroCurrentRun.len===1?'':'s'} running (since ${heroStreakStartLabel})`;
+if(heroPastRuns.length === 0){
+  heroStreakText += ` &mdash; the first time the index has been in ${heroTier} tier since 1977.`;
+} else if(heroCurrentRun.len > heroLongestPast.len){
+  heroStreakText += `, already the longest ${heroTier}-tier stretch since 1977 (previous longest: ${heroLongestPast.len} months, starting ${monthYearLabel(monthly[heroLongestPast.start][0])}).`;
+} else {
+  heroStreakText += `. The longest ${heroTier}-tier stretch on record ran ${heroLongestPast.len} months, starting ${monthYearLabel(monthly[heroLongestPast.start][0])}.`;
+}
+document.getElementById('heroStreak').innerHTML = heroStreakText;
+
+// ---- Share button: native share sheet where available, else copy a pre-filled line, ----
+// else fall back to a pre-filled X/Twitter share intent.
+document.getElementById('shareBtn').addEventListener('click', async function(){
+  const shareText = `JET Index reading: ${heroTier} tier, ${heroScore.toFixed(2)} / 7`;
+  const shareUrl = 'https://jetindx.com/';
+  if(navigator.share){
+    try{ await navigator.share({title:'JET Index', text:shareText, url:shareUrl}); return; }
+    catch(e){ /* user cancelled the share sheet, or it's unsupported here -- fall through */ }
+  }
+  try{
+    await navigator.clipboard.writeText(`${shareText} — ${shareUrl}`);
+    const el = document.getElementById('shareCopied');
+    el.textContent = 'Link copied';
+    setTimeout(()=>{ el.textContent=''; }, 2200);
+  }catch(e){
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener');
+  }
+});
+
 const recent36 = monthly.slice(-36);
 const recentPoints = recent36.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
 const recentYms = recent36.map(r=>r[0]);
@@ -1171,7 +1258,19 @@ function creditCompareSentence(rowA, idxA, rowB, idxB){
   return `Credit conditions differed: Period A was ${describe(stA.level)} (spread ${vA}%), while Period B was ${describe(stB.level)} (spread ${vB}%) \u2014 a real difference the three core tiers alone wouldn't show.`;
 }
 
-document.getElementById('compareBtn').addEventListener('click', function(){
+function copyShareLink(query, btn){
+  const url = `${location.origin}${location.pathname}?${query}`;
+  const restore = () => setTimeout(()=>{ btn.textContent = btn.dataset.label; }, 1800);
+  if(!btn.dataset.label) btn.dataset.label = btn.textContent;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>{ btn.textContent = 'Link copied'; restore(); })
+      .catch(()=>{ window.prompt('Copy this link:', url); });
+  } else {
+    window.prompt('Copy this link:', url);
+  }
+}
+
+function runCompare(){
   const ymA = document.getElementById('periodA').value;
   const ymB = document.getElementById('periodB').value;
   const out = document.getElementById('compareResults');
@@ -1219,8 +1318,10 @@ document.getElementById('compareBtn').addEventListener('click', function(){
     <div class="compare-explain">
       These two periods are ${verdict}. Composite tier: <b>${tierA}</b> in Period A vs <b>${tierB}</b> in Period B.
       ${sentences.join(' ')} ${eraSentence}
-    </div>`;
-});
+    </div>
+    <button type="button" class="share-link-btn" onclick="copyShareLink('a=${ymA}&b=${ymB}', this)">Copy link to this comparison</button>`;
+}
+document.getElementById('compareBtn').addEventListener('click', runCompare);
 
 // Explains why the 3 matched periods' forward returns did (or didn't) diverge, using the
 // credit-stress status and era context at each match -- the two things the numeric tier
@@ -1287,7 +1388,7 @@ function buildSummaryTable(targetRow, targetIdx, picked){
   </table></div>`;
 }
 
-document.getElementById('similarBtn').addEventListener('click', function(){
+function runSimilar(){
   const out = document.getElementById('similarResults');
   const idxNow2 = monthly.length - 1;
   const targetRow = monthly[idxNow2];
@@ -1342,8 +1443,28 @@ document.getElementById('similarBtn').addEventListener('click', function(){
       </div>`;
   }).join('');
 
-  out.innerHTML = buildSummaryTable(targetRow, idxNow2, picked) + itemsHTML + `<div class="compare-explain">${buildDivergenceExplanation(picked, targetRow)}</div>`;
-});
+  out.innerHTML = buildSummaryTable(targetRow, idxNow2, picked) + itemsHTML
+    + `<div class="compare-explain">${buildDivergenceExplanation(picked, targetRow)}</div>`
+    + `<button type="button" class="share-link-btn" onclick="copyShareLink('similar=1', this)">Copy link to this result</button>`;
+}
+document.getElementById('similarBtn').addEventListener('click', runSimilar);
+
+// ---- Permalinks: ?a=YYYY-MM&b=YYYY-MM auto-runs Compare; ?similar=1 auto-runs Find similar. ----
+// "Find similar periods" is always relative to today, so a link like this reproduces the
+// exact result for as long as "today" stays the same -- shared same-day, it's exact.
+(function(){
+  const params = new URLSearchParams(location.search);
+  const a = params.get('a'), b = params.get('b');
+  if(a && b && monthlyMap.has(a) && monthlyMap.has(b)){
+    document.getElementById('periodA').value = a;
+    document.getElementById('periodB').value = b;
+    runCompare();
+    document.getElementById('compareResults').scrollIntoView({behavior:'smooth', block:'start'});
+  } else if(params.get('similar') === '1'){
+    runSimilar();
+    document.getElementById('similarResults').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+})();
 </script>
 </body>
 </html>
