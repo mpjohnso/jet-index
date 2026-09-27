@@ -289,11 +289,8 @@
 
   <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>What's driving this reading</div>
   <div class="card chart-card">
-    <div class="chart-sub" style="margin-bottom:0; font-size:13px; line-height:1.6; color:var(--ink);">
-      The Shiller PE has climbed to roughly 41 &mdash; the second-highest reading in the index's 145-year history, behind only the December 1999 dot-com peak &mdash; as AI-related capital spending and expectations for continued mega-cap earnings growth have kept bidding equity prices higher, even as the rate backdrop has turned less friendly. The yield curve sits at a modest, uneasy +0.3&ndash;0.5%: both ends of the curve have risen sharply this year, with the 10-year near a two-decade high, so this is a shallow spread built on broadly rising yields rather than a healthy steepening &mdash; enough to hold D tier, not reach C. Meanwhile the Excess CAPE Yield &mdash; the cushion stocks offer over bonds &mdash; has thinned to about 1%, its smallest premium since 2002, as elevated equity prices have outrun the rise in real 10-year yields.
-      <br><br>
-      The backdrop behind those moves shifted this month. The Fed had been cutting rates through 2024 and 2025, but on September 16, 2026 it reversed course with its first hike since 2023, taking the target range to 3.75&ndash;4%, in response to an inflation flare-up tied to an oil-price shock from the Iran conflict, even with the labor market still holding up. So the market's still-elevated valuation is now being carried mostly by AI-capex enthusiasm and resilient earnings, without the tailwind of easier money it had for most of the past two years &mdash; a central bank actively fighting inflation, not helping the cost of capital. That combination &mdash; a very expensive market whose two supports (cheap money and a thick bond cushion) are both fading at once &mdash; is what an E-tier composite is built to flag: not the market's rarest extreme, but a period asking to be held with less complacency than usual.
-    </div>
+    <div class="chart-sub" style="margin-bottom:10px;">Generated automatically from today's three inputs and how each compares to its own history &mdash; updates the moment the numbers do.</div>
+    <div class="chart-sub" id="drivingReading" style="margin-bottom:0; font-size:13px; line-height:1.6; color:var(--ink);"></div>
   </div>
 
 
@@ -905,6 +902,44 @@ renderMomentum('momHero', scoreNow-scoreThen, {
   unitFmt: d => `${d>=0?'+':''}${d.toFixed(2)}`,
   upWord: 'improving', downWord: 'softening'
 });
+
+// ---- "What's driving this reading" -- fully generated from the current numbers, ----
+// so it always matches whatever CURRENT_YC/PE/ECY the daily data refresh has set,
+// with no hand-written narrative to go stale.
+(function(){
+  function pctBelow(values, v){ return values.filter(x => x < v).length / values.length * 100; }
+
+  const peVals = monthly.map(r => r[2]);
+  const ycVals = monthly.map(r => r[1]);
+  const ecyVals = monthly.map(r => r[3]);
+
+  const pePct = pctBelow(peVals, CURRENT_PE);
+  const ycPct = pctBelow(ycVals, CURRENT_YC);
+  const ecyPct = pctBelow(ecyVals, CURRENT_ECY);
+
+  const peScore = scorePE(CURRENT_PE), ycScore = scoreYC(CURRENT_YC), ecyScore = scoreEY(CURRENT_ECY);
+
+  const peDelta = rowNow[2] - rowThen[2];
+  const ycDelta = rowNow[1] - rowThen[1];
+  const ecyDelta = rowNow[3] - rowThen[3];
+  const peTrend = peDelta > 0.4 ? 'climbing' : peDelta < -0.4 ? 'pulling back' : 'holding steady';
+  const ycTrend = ycDelta > 0.03 ? 'steepening' : ycDelta < -0.03 ? 'flattening' : 'holding steady';
+  const ecyTrend = ecyDelta > 0.08 ? 'widening' : ecyDelta < -0.08 ? 'narrowing' : 'holding steady';
+
+  const peClause = `Shiller PE is at ${CURRENT_PE.toFixed(1)}, richer than roughly ${Math.round(pePct)}% of the ${monthly.length} months since 1977 and ${peTrend} over the last three months &mdash; a score of ${peScore} out of 7.`;
+
+  const ycClause = ycPct >= 50
+    ? `The 2&ndash;10 yield curve sits at ${CURRENT_YC.toFixed(2)}%, steeper than about ${Math.round(ycPct)}% of months on record and ${ycTrend} lately &mdash; a score of ${ycScore} out of 7.`
+    : `The 2&ndash;10 yield curve sits at ${CURRENT_YC.toFixed(2)}%, flatter than about ${Math.round(100-ycPct)}% of months on record and ${ycTrend} lately &mdash; a score of ${ycScore} out of 7.`;
+
+  const ecyClause = ecyPct <= 50
+    ? `Excess CAPE Yield is at ${CURRENT_ECY.toFixed(2)}%, a thinner cushion over bonds than about ${Math.round(100-ecyPct)}% of months since 1977 and ${ecyTrend} recently &mdash; a score of ${ecyScore} out of 7.`
+    : `Excess CAPE Yield is at ${CURRENT_ECY.toFixed(2)}%, a wider cushion over bonds than about ${Math.round(ecyPct)}% of months since 1977 and ${ecyTrend} recently &mdash; a score of ${ecyScore} out of 7.`;
+
+  const tierClause = `Weighted together, that puts the composite at ${heroScore.toFixed(2)} out of 7 &mdash; ${heroTier} tier.`;
+
+  document.getElementById('drivingReading').innerHTML = `${peClause} ${ycClause} ${ecyClause} ${tierClause}`;
+})();
 
 // ---- Compare two periods / find similar periods ----
 const SP500 = {
