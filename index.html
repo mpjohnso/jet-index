@@ -59,11 +59,16 @@
   .score-changed{display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--sub); margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);}
   .score-changed .dot{width:6px; height:6px; border-radius:50%; background:var(--favorable); flex:none;}
   .data-checked-footer{text-align:center; font-size:10px; color:var(--sub); opacity:0.65; margin-top:6px;}
-  .hero-actions{display:flex; align-items:center; gap:10px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+  .hero-actions{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
   .share-wrap{position:relative;}
-  .share-btn{font-size:12px; font-weight:600; color:var(--ink); background:none; border:1px solid var(--line); border-radius:16px; padding:6px 14px; cursor:pointer; font-family:'Oswald',sans-serif;}
+  .share-btn{font-size:12px; font-weight:600; color:var(--ink); background:none; border:1px solid var(--line); border-radius:16px; padding:6px 14px; cursor:pointer; font-family:'Oswald',sans-serif; flex:none;}
   .share-btn:active{opacity:0.8;}
   .share-copied{font-size:11.5px; color:var(--favorable); font-weight:600;}
+  .notify-inline{display:flex; gap:6px; flex:1; min-width:200px;}
+  .notify-inline-input{flex:1; min-width:0; font-size:12px; padding:7px 11px; border:1px solid var(--line); border-radius:16px; background:#fff; color:var(--ink);}
+  .notify-inline-input:focus{outline:2px solid var(--ink); outline-offset:1px;}
+  .notify-inline-btn{flex:none; padding:7px 14px; border:none; border-radius:16px; background:var(--ink); color:#fff; font-family:'Oswald',sans-serif; font-weight:600; font-size:12px; letter-spacing:0.01em; cursor:pointer; white-space:nowrap;}
+  .notify-inline-btn:active{opacity:0.85;}
   .share-menu{
     position:fixed; z-index:200; min-width:180px;
     background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px;
@@ -176,15 +181,7 @@
   .hero-mark{position:absolute; top:-22px; right:-22px; width:134px; height:134px; color:var(--ink); opacity:0.07; pointer-events:none;}
   .footer-mark{display:block; width:26px; height:26px; margin:26px auto 0; color:var(--ink); opacity:0.35;}
 
-  .notify-menu{width:260px; padding:14px;}
-  .notify-title{font-size:13.5px; font-weight:600; margin-bottom:6px;}
-  .notify-desc{font-size:11.5px; color:var(--sub); line-height:1.5; margin-bottom:12px;}
-  .notify-form{display:flex; flex-direction:column; gap:8px;}
-  .notify-input{width:100%; font-size:13px; padding:9px 11px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink);}
-  .notify-input:focus{outline:2px solid var(--ink); outline-offset:1px;}
-  .notify-btn{width:100%; padding:9px 16px; border:none; border-radius:8px; background:var(--ink); color:#fff; font-family:'Oswald',sans-serif; font-weight:600; font-size:13px; letter-spacing:0.01em; cursor:pointer; white-space:nowrap;}
-  .notify-btn:active{opacity:0.85;}
-  .notify-status{font-size:12px; margin-top:10px; line-height:1.4;}
+  .notify-status{font-size:11.5px; margin-top:8px; line-height:1.4;}
   .notify-status.ok{color:var(--favorable); font-weight:600;}
   .notify-status.err{color:var(--unfavorable); font-weight:600;}
 
@@ -258,20 +255,13 @@
           <button type="button" class="share-menu-item" id="shareCopyBtn">Copy link</button>
         </div>
       </div>
-      <div class="share-wrap">
-        <button type="button" class="share-btn" id="notifyBtn" aria-haspopup="true" aria-expanded="false">Get notified</button>
-        <div class="share-menu notify-menu" id="notifyMenu" hidden>
-          <div class="notify-title">Get notified when the score changes</div>
-          <div class="notify-desc">We'll email you whenever the composite reading actually moves &mdash; not a daily check-in, just real changes.</div>
-          <form class="notify-form" id="notifyForm">
-            <input type="email" id="notifyEmail" class="notify-input mono" placeholder="you@email.com" required>
-            <button type="submit" class="notify-btn">Notify me</button>
-          </form>
-          <div class="notify-status" id="notifyStatus"></div>
-        </div>
-      </div>
+      <form class="notify-inline" id="notifyForm">
+        <input type="email" id="notifyEmail" class="notify-inline-input mono" placeholder="you@email.com" required>
+        <button type="submit" class="notify-inline-btn">Notify me</button>
+      </form>
       <span class="share-copied" id="shareCopied" aria-live="polite"></span>
     </div>
+    <div class="notify-status" id="notifyStatus"></div>
   </div>
 
   <div class="card tier-legend">
@@ -988,18 +978,6 @@ window.addEventListener('scroll', closeAllHeroDropdowns, true);
     }
     e.stopPropagation();
     shareDropdown.toggle();
-  });
-})();
-
-// ---- Get-notified button: same dropdown pattern as Share, so the signup form sits in the ----
-// same row instead of breaking up the page as its own full-width card between the hero and
-// the tier guide.
-(function(){
-  const notifyDropdown = makeDropdown('notifyBtn', 'notifyMenu');
-  notifyDropdown.btn.addEventListener('click', function(e){
-    e.stopPropagation();
-    notifyDropdown.toggle();
-    if(!notifyDropdown.menu.hidden) document.getElementById('notifyEmail').focus();
   });
 })();
 
