@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>What is the JET Index? &middot; JET Index</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -32,7 +33,9 @@
   }
   .back-link:hover{background:var(--bg);}
 
-  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px 22px 24px; margin-bottom:16px;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px 22px 24px; margin-bottom:16px; position:relative; overflow:hidden;}
+  .card-mark{position:absolute; top:-18px; right:-18px; width:104px; height:104px; color:var(--ink); opacity:0.05; pointer-events:none;}
+  .footer-mark{display:block; width:18px; height:18px; margin:22px auto 0; color:var(--ink); opacity:0.3;}
 
   h1{font-size:24px; font-weight:700; margin:0 0 14px; letter-spacing:0.01em;}
   h2{font-size:16px; font-weight:600; margin:24px 0 8px;}
@@ -45,20 +48,23 @@
 </style>
 </head>
 <body>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="brandmark" viewBox="0 0 1147 1147">
+    <circle cx="573.5" cy="573.5" r="523.25" fill="none" stroke="currentColor" stroke-width="84.5"/>
+    <path fill="currentColor" d="M 508.0 651.5 L 209.5 434.0 L 210.0 317.5 L 583.5 587.0 L 508.0 651.5 Z M 435.0 876.5 L 405.0 873.5 L 372.0 858.5 L 209.5 736.0 L 208.0 620.5 L 390.0 759.5 L 416.0 771.5 L 436.0 771.5 L 468.0 755.5 L 865.0 451.5 L 1021.5 450.0 L 493.0 852.5 L 462.0 870.5 L 435.0 876.5 Z"/>
+  </symbol>
+</svg>
 <div class="wrap">
 
   <header>
-    <svg class="logo" viewBox="0 0 40 40">
-      <circle cx="20" cy="20" r="16.5" fill="none" stroke="var(--ink)" stroke-width="5.4"/>
-      <path d="M9.5 16.5 L17.5 23.5" stroke="var(--ink)" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <path d="M8.5 22.5 L17 30 L32 12" stroke="var(--ink)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <svg class="logo" viewBox="0 0 1147 1147" style="color:var(--ink);"><use href="#brandmark"></use></svg>
     <div><div class="wordmark">JOHNSON ECONOMIC TIER</div><div class="tagline">JET Index &middot; U.S. market valuation gauge</div></div>
   </header>
 
   <a class="back-link" href="/">&larr; Back to the dashboard</a>
 
   <div class="card">
+    <svg class="card-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
     <h1>What is the JET Index?</h1>
     <p class="lede">The JET Index is a composite measurement tool combining three financial market valuation indicators: the 2&ndash;10 Yield Curve Spread, Shiller PE, and Excess CAPE Yield. Each indicator receives a tier ranking from S (attractive) to F (unattractive), representing market conditions ranging from exceptional buying opportunities to dire situations.</p>
 
@@ -73,6 +79,7 @@
 
   <a class="back-link" href="/">&larr; Back to the dashboard</a>
 
+  <svg class="footer-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
   <div class="timestamp">Brought over from the original Johnson Economic Tier site</div>
 </div>
 </body>

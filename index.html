@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>JET Index</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -25,7 +26,7 @@
   @media (min-width:1000px){ .wrap{max-width:920px;} }
 
   header{display:flex; align-items:center; gap:12px; margin-bottom:24px;}
-  .logo{width:36px; height:36px; flex:none;}
+  .logo{width:36px; height:36px; flex:none; color:var(--ink);}
   .wordmark{font-size:19px; font-weight:700; letter-spacing:0.03em; margin:0;}
   header .tagline{font-size:12px; color:var(--sub); font-weight:400; margin-top:1px; letter-spacing:0.01em;}
 
@@ -100,7 +101,8 @@
   }
   .meter-marker{position:absolute; top:-7px; width:2px; height:22px; background:var(--ink); transform:translateX(-1px); border-radius:2px;}
 
-  .section-title{font-size:15px; font-weight:600; margin:24px 2px 10px; letter-spacing:0.01em;}
+  .section-title{font-size:15px; font-weight:600; margin:24px 2px 10px; letter-spacing:0.01em; display:flex; align-items:center; gap:8px;}
+  .title-mark{width:13px; height:13px; flex:none; color:var(--ink);}
 
   .metric-card{padding:16px 18px 15px; margin-bottom:10px;}
   .metric-top{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px;}
@@ -129,10 +131,29 @@
   }
   .xlabels{display:flex; justify-content:space-between; font-size:10px; color:var(--sub); margin-top:4px;}
 
-  .legend{display:flex; gap:5px; margin-top:16px;}
-  .legend .cell{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;}
-  .legend .sw{width:100%; height:5px; border-radius:3px;}
-  .legend .lt{font-size:10.5px; color:var(--sub); font-weight:500;}
+  .hero{position:relative; overflow:hidden;}
+  .hero-mark{position:absolute; top:-18px; right:-18px; width:104px; height:104px; color:var(--ink); opacity:0.055; pointer-events:none;}
+  .footer-mark{display:block; width:18px; height:18px; margin:24px auto 0; color:var(--ink); opacity:0.3;}
+
+  .tier-legend{padding:16px 18px 6px; margin-bottom:14px;}
+  .tier-legend-title{font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--sub); margin-bottom:10px;}
+  .tier-strip{display:flex; height:6px; border-radius:3px; overflow:hidden; margin-bottom:14px;}
+  .tier-strip .seg{flex:1;}
+  .tier-legend-grid{display:flex; flex-direction:column;}
+  .tier-row{display:flex; align-items:center; gap:11px; padding:8px 0;}
+  .tier-row:not(:last-child){border-bottom:1px dashed var(--line);}
+  .tier-row .tier-chip{width:26px; height:26px; font-size:12px; border-radius:7px; flex:none;}
+  .tier-row .tier-desc{font-size:12px; color:var(--ink); line-height:1.4;}
+  .tier-row .tier-desc b{font-weight:700;}
+  @media (min-width:700px){
+    .tier-legend-grid{display:grid; grid-template-columns:1fr 1fr; column-gap:22px;}
+  }
+
+  .credit-legend{display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+  .credit-legend-item{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink);}
+  .credit-legend-item b{font-weight:700;}
+  .credit-implication{font-size:12px; color:var(--sub); line-height:1.55; margin-top:10px;}
+  .credit-implication b{color:var(--ink); font-weight:600;}
 
   .note{margin-top:18px; padding:14px 16px; border:1px dashed var(--line); border-radius:12px; font-size:12.5px; color:var(--sub); line-height:1.55; background:var(--panel);}
   .note b{color:var(--ink); font-weight:600;}
@@ -140,19 +161,22 @@
 </style>
 </head>
 <body>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="brandmark" viewBox="0 0 1147 1147">
+    <circle cx="573.5" cy="573.5" r="523.25" fill="none" stroke="currentColor" stroke-width="84.5"/>
+    <path fill="currentColor" d="M 508.0 651.5 L 209.5 434.0 L 210.0 317.5 L 583.5 587.0 L 508.0 651.5 Z M 435.0 876.5 L 405.0 873.5 L 372.0 858.5 L 209.5 736.0 L 208.0 620.5 L 390.0 759.5 L 416.0 771.5 L 436.0 771.5 L 468.0 755.5 L 865.0 451.5 L 1021.5 450.0 L 493.0 852.5 L 462.0 870.5 L 435.0 876.5 Z"/>
+  </symbol>
+</svg>
 <div class="wrap">
 
   <header>
-    <svg class="logo" viewBox="0 0 40 40">
-      <circle cx="20" cy="20" r="16.5" fill="none" stroke="var(--ink)" stroke-width="5.4"/>
-      <path d="M9.5 16.5 L17.5 23.5" stroke="var(--ink)" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <path d="M8.5 22.5 L17 30 L32 12" stroke="var(--ink)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <svg class="logo" viewBox="0 0 1147 1147" style="color:var(--ink);"><use href="#brandmark"></use></svg>
     <div style="flex:1;"><div class="wordmark">JOHNSON ECONOMIC TIER</div><div class="tagline">JET Index &middot; U.S. market valuation gauge</div></div>
     <a href="/about.html" style="font-size:12px; font-weight:600; color:var(--ink); text-decoration:none; border:1px solid var(--line); border-radius:16px; padding:6px 12px; white-space:nowrap;">What is this?</a>
   </header>
 
   <div class="card hero">
+    <svg class="hero-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
     <div class="eyebrow">Current composite reading</div>
     <div class="hero-row">
       <div class="tier-chip" id="heroChip"></div>
@@ -165,15 +189,23 @@
     <div class="meter" id="heroMeter"></div>
   </div>
 
+  <div class="card tier-legend">
+    <div class="tier-legend-title">Tier guide</div>
+    <div class="tier-strip" id="tierStrip"></div>
+    <div class="tier-legend-grid" id="tierLegendGrid"></div>
+  </div>
+
   <div class="card credit-card">
     <div class="credit-row">
       <span class="credit-label">Credit conditions</span>
       <span class="mono" id="creditStatusText"></span>
     </div>
     <div class="credit-desc">A separate signal, not part of the score above: whether corporate credit spreads are widening fast enough to suggest genuine financial-system stress, rather than just an expensive market. Based on the Baa&ndash;10Y spread's 6-month change.</div>
+    <div class="credit-legend" id="creditLegend"></div>
+    <div class="credit-implication"><b>How to read it:</b> this is a warning light, not a vote in the composite score above. The three inputs measure how expensive markets are; credit conditions measure whether the financial system itself is under strain. Valuation can look calm while credit quietly deteriorates &mdash; as it did heading into 2008 &mdash; so when this flag moves to Watch or Elevated, it's worth weighing more heavily than the tier reading alone.</div>
   </div>
 
-  <div class="section-title">The three inputs</div>
+  <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>The three inputs</div>
 
   <div class="metrics-grid">
   <div class="card metric-card">
@@ -207,9 +239,7 @@
   </div>
   </div>
 
-  <div class="legend" id="legendRow"></div>
-
-  <div class="section-title">Last 36 months</div>
+  <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Last 36 months</div>
   <div class="card chart-card">
     <div class="chart-head">Recent trend, monthly</div>
     <div class="chart-sub">Yield curve is real every month. The most recent 12 months are fully real for all three inputs; the prior 24 are interpolated between real quarterly/annual anchors. Hover or touch the line to see any month's reading.</div>
@@ -220,14 +250,14 @@
     <div class="xlabels" id="xRecent"></div>
   </div>
 
-  <div class="section-title">Find similar periods in history</div>
+  <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Find similar periods in history</div>
   <div class="card compare-card">
     <div class="compare-sub">Searches all 597 months for the closest matches to the current reading, based on all three tiers together, not just the composite average.</div>
     <button class="compare-btn" id="similarBtn">Find similar periods to today</button>
     <div id="similarResults"></div>
   </div>
 
-  <div class="section-title">What's driving this reading</div>
+  <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>What's driving this reading</div>
   <div class="card chart-card">
     <div class="chart-sub" style="margin-bottom:0; font-size:13px; line-height:1.6; color:var(--ink);">
       The Shiller PE has climbed to roughly 41 &mdash; the second-highest reading in the index's 145-year history, behind only the December 1999 dot-com peak &mdash; as AI-related capital spending and expectations for continued mega-cap earnings growth have kept bidding equity prices higher, even as the rate backdrop has turned less friendly. The yield curve sits at a modest, uneasy +0.3&ndash;0.5%: both ends of the curve have risen sharply this year, with the 10-year near a two-decade high, so this is a shallow spread built on broadly rising yields rather than a healthy steepening &mdash; enough to hold D tier, not reach C. Meanwhile the Excess CAPE Yield &mdash; the cushion stocks offer over bonds &mdash; has thinned to about 1%, its smallest premium since 2002, as elevated equity prices have outrun the rise in real 10-year yields.
@@ -237,7 +267,7 @@
   </div>
 
 
-  <div class="section-title">Full history, month by month</div>
+  <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Full history, month by month</div>
   <div class="card chart-card">
     <div class="chart-head">Full history, monthly, backtested</div>
     <div class="chart-sub">Every month, 1977&ndash;2026, run through your exact tier formula. The final point is always this month's actual reading, not a January snapshot. Hover or touch the line to see any month's reading.</div>
@@ -250,7 +280,7 @@
     <div class="chart-sub" style="margin-top:4px;">Amber/red marks: months where corporate credit spreads widened fast enough to suggest genuine financial-system stress (see the credit-conditions note above).</div>
   </div>
 
-  <div class="section-title">Compare two periods</div>
+  <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Compare two periods</div>
   <div class="card compare-card">
     <div class="compare-inputs">
       <div class="compare-input-group">
@@ -273,6 +303,7 @@
     <br><br>
     <b>Data behind these charts:</b> both charts plot every month, not one point per year. The yield curve spread is real for all 597 months shown, straight from the Federal Reserve (FRED, series T10Y2YM) &mdash; no exceptions. Shiller PE and Excess CAPE Yield are exact, real monthly figures from Robert Shiller's own published dataset for January 1977 through January 2016, and again for the most recent 12 months; the 116 months in between are interpolated between real annual anchor points and recalibrated against the real October 2025 reading, rather than independently verified month by month. The final point on both charts is always the current month's actual reading, never a stale snapshot.
   </div>
+  <svg class="footer-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
   <div class="timestamp">Current reading and monthly chart as of September 2026 &middot; annual chart real 1977&ndash;2026</div>
 </div>
 
@@ -317,12 +348,26 @@ setChip('chipYC','D'); renderMeter('meterYC','D');
 setChip('chipPE','F'); renderMeter('meterPE','F');
 setChip('chipEY','E'); renderMeter('meterEY','E');
 
-const legendRow = document.getElementById('legendRow');
-ORDER.forEach(letter=>{
-  const cell=document.createElement('div'); cell.className='cell';
-  cell.innerHTML = `<div class="sw" style="background:${TIER_COLOR[letter]}"></div><div class="lt">${letter}</div>`;
-  legendRow.appendChild(cell);
-});
+const TIER_DESC = {
+  S:'Rare bargain conditions — the strongest historical forward returns.',
+  A:'Attractively priced, with a comfortable margin of safety.',
+  B:'Reasonably valued; a favorable long-term setup.',
+  C:'Fair value — average, unremarkable conditions.',
+  D:'Elevated — a thin margin of safety.',
+  E:'Expensive — valuations meaningfully stretched.',
+  F:'Extreme — among the richest, riskiest readings on record.'
+};
+
+const tierStrip = document.getElementById('tierStrip');
+tierStrip.innerHTML = ORDER.map(l=>`<div class="seg" style="background:${TIER_COLOR[l]}"></div>`).join('');
+
+const tierLegendGrid = document.getElementById('tierLegendGrid');
+tierLegendGrid.innerHTML = ORDER.map(letter=>
+  `<div class="tier-row">
+    <span class="tier-chip" style="${chip(letter)}">${letter}</span>
+    <span class="tier-desc"><b>${letter} tier</b> &middot; ${TIER_DESC[letter]}</span>
+  </div>`
+).join('');
 
 function monthYearLabel(ym){
   const [y,m] = ym.split('-');
@@ -675,6 +720,14 @@ function creditStatus(widening){
   return {level:'calm', label:'Calm', detail:`${widening>=0?'+':''}${widening.toFixed(2)}pp over 6 months`};
 }
 const CREDIT_DOT = {calm:'#4fae59', amber:'#ef8f1e', red:'#c92f86'};
+const CREDIT_LEVELS = [
+  {level:'calm', label:'Calm', range:'under +0.50pp'},
+  {level:'amber', label:'Watch', range:'+0.50 to +0.99pp'},
+  {level:'red', label:'Elevated', range:'+1.00pp or more'}
+];
+document.getElementById('creditLegend').innerHTML = CREDIT_LEVELS.map(c=>
+  `<div class="credit-legend-item"><span class="credit-dot" style="background:${CREDIT_DOT[c.level]}"></span><b>${c.label}</b> &middot; ${c.range}</div>`
+).join('');
 
 const currentWidening = widen6mo(monthly.length-1);
 const currentCredit = creditStatus(currentWidening);
