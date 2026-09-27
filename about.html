@@ -43,6 +43,12 @@
   p:last-child{margin-bottom:0;}
   .lede{font-size:15.5px; line-height:1.65; color:var(--ink);}
   b{font-weight:700;}
+  ul.reasons{margin:0 0 14px; padding-left:20px;}
+  ul.reasons li{font-size:14.5px; line-height:1.65; color:var(--ink); margin-bottom:9px;}
+  ul.reasons li:last-child{margin-bottom:0;}
+  .note-block{background:var(--bg); border:1px solid var(--line); border-radius:9px; padding:14px 16px; margin:14px 0;}
+  .note-block p{margin-bottom:10px;}
+  .note-block p:last-child{margin-bottom:0;}
 
   .timestamp{text-align:center; font-size:11px; color:var(--sub); margin-top:22px;}
 </style>
@@ -69,7 +75,27 @@
     <p class="lede">The JET Index is a composite measurement tool combining three financial market valuation indicators: the 2&ndash;10 Yield Curve Spread, Shiller PE, and Excess CAPE Yield. Each indicator receives a tier ranking from S (attractive) to F (unattractive), representing market conditions ranging from exceptional buying opportunities to dire situations.</p>
 
     <h2>Purpose and creation</h2>
-    <p>The index was developed to cut through market noise and conflicting expert opinions. It addresses three key questions: market expense levels (Shiller PE), price attractiveness relative to risk-free investments (Excess CAPE Yield), and bond market dynamics (Treasury spread).</p>
+    <p>The index was developed to cut through market noise and conflicting expert opinions. Each of the three inputs measures something the other two can't. Shiller PE (CAPE) shows whether stocks are expensive relative to their own decade-plus earnings history &mdash; but says nothing about the alternative, which is holding bonds instead. Excess CAPE Yield corrects for that: it's the equity risk premium, the extra return stocks offer over safe Treasuries, so it accounts for the interest-rate environment CAPE ignores. The 2&ndash;10 Yield Curve Spread is a different kind of signal entirely &mdash; not a valuation measure but the bond market's own forward read on recession risk, which has preceded nearly every U.S. downturn since the 1970s. Together, they combine two valuation lenses (absolute, and relative to rates) with one macro-risk lens, so the index doesn't mistake "statistically cheap" for "safe," or "expensive" for "imminent danger" &mdash; each factor has to earn its own way into a favorable read.</p>
+
+    <h2>Why these three, and not others</h2>
+    <p>Several commonly-cited metrics were considered and set aside, each for a specific reason:</p>
+    <ul class="reasons">
+      <li><b>Trailing or forward P/E</b> &mdash; uses a single year of earnings, which swing sharply with the business cycle. Earnings often collapse right as a recession hits, which can make trailing P/E spike and read "expensive" at the exact moment stocks are actually cheap. CAPE avoids this by averaging ten years of real earnings, smoothing out that false signal.</li>
+      <li><b>The "Fed Model"</b> (comparing the earnings yield to the nominal 10-year Treasury yield) &mdash; a classic and widely-used comparison, but it makes an apples-to-oranges error: it nets a real quantity (an earnings yield built from inflation-adjusted prices and earnings) against a nominal bond yield that still has inflation baked in. That flaw is exactly what Excess CAPE Yield was built to fix, by subtracting the real 10-year rate instead &mdash; which is why ECY is used here rather than the older Fed Model comparison.</li>
+      <li><b>Market cap-to-GDP ("Buffett Indicator")</b> &mdash; doesn't hold up well across decades because it ignores that public companies now earn a much larger share of revenue overseas than GDP captures, and that the share of the economy held in public markets has structurally grown over time. Both distort the ratio in ways that have nothing to do with valuation.</li>
+      <li><b>Dividend yield alone</b> &mdash; has trended structurally lower since the 1980s mainly because companies shifted toward buybacks instead of dividends as a matter of tax and capital-allocation preference, not because stocks got more expensive. That makes it unreliable to compare across eras.</li>
+      <li><b>Volatility or sentiment measures</b> (the VIX, put/call ratios, bullish/bearish surveys) &mdash; these measure near-term fear and positioning, which mean-reverts over weeks, not years. They're built for short-term timing, which runs counter to this index's purpose (see "What it shouldn't do," below).</li>
+      <li><b>Credit spreads</b> &mdash; genuinely useful, and already shown on this site as a separate overlay. But a corporate credit spread measures financial-system stress, not equity valuation. Folding it into the same composite score as the other three would blend two different questions &mdash; "are stocks cheap?" and "is the credit system under strain?" &mdash; into one number, making both harder to read.</li>
+    </ul>
+
+    <h2>The underlying idea</h2>
+    <p>All three chosen inputs point back to a single, simple belief: buying stock is buying a claim on a company's future profits, and whether that's a good deal depends on the price paid for those profits relative to the alternatives &mdash; a bond, cash, or just holding value against inflation. Shiller PE asks whether that price is high relative to the company's own earnings history. Excess CAPE Yield asks whether it's high relative to what a safe bond currently pays. The yield curve asks whether the macro environment those future profits depend on is stable or already flashing recession risk. None of the three, on its own, answers the whole question &mdash; together, they approximate it.</p>
+
+    <h2>A note on inflation and debt</h2>
+    <div class="note-block">
+      <p>Inflation isn't ignored here &mdash; it's already built into two of the three inputs. Shiller PE uses inflation-adjusted prices and a ten-year average of inflation-adjusted earnings, and Excess CAPE Yield explicitly subtracts a <i>real</i> (inflation-adjusted) interest rate rather than a nominal one, which is precisely what lets it stay meaningful whether inflation is running at 1% or 8%.</p>
+      <p>What the index can't see, though, is a change in whether that comparison rate is genuinely market-determined. The backtest deliberately starts in 1977 rather than earlier because from 1942&ndash;1951 the U.S. Treasury market wasn't market-driven at all &mdash; the Federal Reserve administratively pegged yields to help finance war debt. If elevated government debt loads ever pushed policy back toward that kind of yield suppression ("financial repression") rather than a market-set rate, the index would have no way to flag it &mdash; it would simply see the resulting yield-curve and rate readings at face value, the same way it does today. That's a limitation worth naming plainly rather than solving with another input.</p>
+    </div>
 
     <h2>Intended use</h2>
     <p><b>What it shouldn't do:</b> The JET Index is explicitly not designed for market timing. Historical data shows comparable average returns (13&ndash;17%) across most tiers, with notable losses only in F Tier conditions.</p>
