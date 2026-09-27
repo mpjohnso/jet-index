@@ -161,6 +161,7 @@
   .tier-row .tier-chip{width:26px; height:26px; font-size:12px; border-radius:7px; flex:none;}
   .tier-row .tier-desc{font-size:12px; color:var(--ink); line-height:1.4;}
   .tier-row .tier-desc b{font-weight:700;}
+  .tier-row .tier-rarity{font-size:10.5px; color:var(--sub); font-family:'JetBrains Mono',ui-monospace,monospace;}
   @media (min-width:700px){
     .tier-legend-grid{display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(4,auto); grid-auto-flow:column; column-gap:22px;}
   }
@@ -371,7 +372,7 @@ function nearestTier(score){ return ORDER[Math.max(0,Math.min(6,Math.round(score
 const CURRENT_YC = 0.46, CURRENT_PE = 40.58, CURRENT_ECY = 1.01;
 const heroScore = composite(CURRENT_YC, CURRENT_PE, CURRENT_ECY);
 const heroTier = nearestTier(heroScore);
-document.getElementById('heroScoreText').textContent = `weighted score ${heroScore.toFixed(2)} / 7 (25% curve / 37.5% CAPE / 37.5% ECY)`;
+document.getElementById('heroScoreText').textContent = `weighted score ${heroScore.toFixed(2)} / 7`;
 
 setChip('heroChip', heroTier); renderMeterContinuous('heroMeter', heroScore);
 
@@ -429,14 +430,6 @@ const TIER_DESC = {
 
 const tierStrip = document.getElementById('tierStrip');
 tierStrip.innerHTML = ORDER.map(l=>`<div class="seg" style="background:${TIER_COLOR[l]}"></div>`).join('');
-
-const tierLegendGrid = document.getElementById('tierLegendGrid');
-tierLegendGrid.innerHTML = ORDER.map(letter=>
-  `<div class="tier-row">
-    <span class="tier-chip" style="${chip(letter)}">${letter}</span>
-    <span class="tier-desc"><b>${letter} tier</b> &middot; ${TIER_DESC[letter]}</span>
-  </div>`
-).join('');
 
 function monthYearLabel(ym){
   const [y,m] = ym.split('-');
@@ -760,6 +753,21 @@ const monthly = [
   ['2026-04',0.52,38.14,1.66,1.71],['2026-05',0.48,40.27,1.39,1.62],['2026-06',0.36,40.15,1.34,1.53],
   ['2026-07',0.38,40.01,1.23,1.59],['2026-08',0.46,41.12,1.07,1.64],['2026-09',0.46,40.58,1.01,1.39]
 ];
+// Rarity: how many of the 597 real backtested months landed in each tier, so a viewer can
+// see at a glance whether today's reading is common or historically unusual.
+const tierCounts = {S:0,A:0,B:0,C:0,D:0,E:0,F:0};
+monthly.forEach(([ym,yc,pe,ecy,cr])=>{ tierCounts[nearestTier(composite(yc,pe,ecy))]++; });
+const totalMonths = monthly.length;
+document.getElementById('tierLegendGrid').innerHTML = ORDER.map(letter=>{
+  const n = tierCounts[letter];
+  const pct = (n/totalMonths*100);
+  const pctStr = pct < 1 ? pct.toFixed(1) : Math.round(pct);
+  return `<div class="tier-row">
+    <span class="tier-chip" style="${chip(letter)}">${letter}</span>
+    <span class="tier-desc"><b>${letter} tier</b> &middot; ${TIER_DESC[letter]}<br><span class="tier-rarity">${pctStr}% of months since 1977 (${n} of ${totalMonths})</span></span>
+  </div>`;
+}).join('');
+
 const allPoints = monthly.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
 const allYms = monthly.map(r=>r[0]);
 drawHistoryChart('plotLong','xLong', allPoints, ['1977','1990','2000','2010','2020','2026'], 170, allYms);
