@@ -111,7 +111,14 @@
   .chart-card{padding:16px 14px 10px; margin-bottom:16px;}
   .chart-head{font-size:13.5px; font-weight:500; margin-bottom:2px;}
   .chart-sub{font-size:11.5px; color:var(--sub); margin-bottom:10px;}
-  .chart-plot{width:100%;}
+  .chart-plot{width:100%; display:block; cursor:crosshair;}
+  .chart-wrap{position:relative;}
+  .chart-tooltip{
+    position:absolute; transform:translate(-50%,-125%); pointer-events:none;
+    background:var(--ink); color:#fff; font-family:'JetBrains Mono',ui-monospace,monospace;
+    font-size:11px; font-weight:600; padding:5px 9px; border-radius:6px; white-space:nowrap;
+    opacity:0; transition:opacity 0.1s ease; z-index:5;
+  }
   .xlabels{display:flex; justify-content:space-between; font-size:10px; color:var(--sub); margin-top:4px;}
 
   .legend{display:flex; gap:5px; margin-top:16px;}
@@ -191,6 +198,24 @@
 
   <div class="legend" id="legendRow"></div>
 
+  <div class="section-title">Last 36 months</div>
+  <div class="card chart-card">
+    <div class="chart-head">Recent trend, monthly</div>
+    <div class="chart-sub">Yield curve is real every month. The most recent 12 months are fully real for all three inputs; the prior 24 are interpolated between real quarterly/annual anchors. Hover or touch the line to see any month's reading.</div>
+    <div class="chart-wrap">
+      <svg class="chart-plot" id="plotRecent" viewBox="0 0 560 150" preserveAspectRatio="none"></svg>
+      <div class="chart-tooltip" id="plotRecent-tip"></div>
+    </div>
+    <div class="xlabels" id="xRecent"></div>
+  </div>
+
+  <div class="section-title">Find similar periods in history</div>
+  <div class="card compare-card">
+    <div class="compare-sub">Searches all 597 months for the closest matches to the current reading, based on all three tiers together, not just the composite average.</div>
+    <button class="compare-btn" id="similarBtn">Find similar periods to today</button>
+    <div id="similarResults"></div>
+  </div>
+
   <div class="section-title">What's driving this reading</div>
   <div class="card chart-card">
     <div class="chart-sub" style="margin-bottom:0; font-size:13px; line-height:1.6; color:var(--ink);">
@@ -204,19 +229,14 @@
   <div class="section-title">Full history, month by month</div>
   <div class="card chart-card">
     <div class="chart-head">Full history, monthly, backtested</div>
-    <div class="chart-sub">Every month, 1977&ndash;2026, run through your exact tier formula. The final point is always this month's actual reading, not a January snapshot.</div>
-    <svg class="chart-plot" id="plotLong" viewBox="0 0 560 170" preserveAspectRatio="none"></svg>
+    <div class="chart-sub">Every month, 1977&ndash;2026, run through your exact tier formula. The final point is always this month's actual reading, not a January snapshot. Hover or touch the line to see any month's reading.</div>
+    <div class="chart-wrap">
+      <svg class="chart-plot" id="plotLong" viewBox="0 0 560 170" preserveAspectRatio="none"></svg>
+      <div class="chart-tooltip" id="plotLong-tip"></div>
+    </div>
     <div class="xlabels" id="xLong"></div>
     <svg class="credit-strip" id="creditStrip" viewBox="0 0 560 14" preserveAspectRatio="none"></svg>
     <div class="chart-sub" style="margin-top:4px;">Amber/red marks: months where corporate credit spreads widened fast enough to suggest genuine financial-system stress (see the credit-conditions note above).</div>
-  </div>
-
-  <div class="section-title">Last 36 months</div>
-  <div class="card chart-card">
-    <div class="chart-head">Recent trend, monthly</div>
-    <div class="chart-sub">Yield curve is real every month. The most recent 12 months are fully real for all three inputs; the prior 24 are interpolated between real quarterly/annual anchors.</div>
-    <svg class="chart-plot" id="plotRecent" viewBox="0 0 560 150" preserveAspectRatio="none"></svg>
-    <div class="xlabels" id="xRecent"></div>
   </div>
 
   <div class="section-title">Compare two periods</div>
@@ -233,13 +253,6 @@
     </div>
     <button class="compare-btn" id="compareBtn">Compare</button>
     <div id="compareResults"></div>
-  </div>
-
-  <div class="section-title">Find similar periods in history</div>
-  <div class="card compare-card">
-    <div class="compare-sub">Searches all 597 months for the closest matches to the current reading, based on all three tiers together, not just the composite average.</div>
-    <button class="compare-btn" id="similarBtn">Find similar periods to today</button>
-    <div id="similarResults"></div>
   </div>
 
   <div class="note">
@@ -300,8 +313,16 @@ ORDER.forEach(letter=>{
   legendRow.appendChild(cell);
 });
 
-// vertical history chart: S at top, F at bottom (matches the site's own precedent), tinted reference bands
-function drawHistoryChart(plotId, xlabelId, points, labels, height){
+function monthYearLabel(ym){
+  const [y,m] = ym.split('-');
+  const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${names[parseInt(m,10)-1]} ${y}`;
+}
+
+// vertical history chart: S at top, F at bottom (matches the site's own precedent), tinted reference bands.
+// `yms`, when provided, is an array of 'yyyy-mm' strings aligned 1:1 with `points`, used to power
+// a hover/touch crosshair that shows the exact month, year, tier and score at any position on the line.
+function drawHistoryChart(plotId, xlabelId, points, labels, height, yms){
   const svg = document.getElementById(plotId);
   const W = 560, H = height;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
@@ -344,6 +365,57 @@ function drawHistoryChart(plotId, xlabelId, points, labels, height){
   const xl = document.getElementById(xlabelId);
   xl.innerHTML='';
   labels.forEach(l=>{ const s=document.createElement('span'); s.textContent=l; xl.appendChild(s); });
+
+  // ---- Hover / touch crosshair: shows the exact month, year, tier and score at any x position ----
+  if(yms && yms.length === points.length){
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const hoverLine = document.createElementNS(svgNS,'line');
+    hoverLine.setAttribute('y1', padTop); hoverLine.setAttribute('y2', H - padBottom);
+    hoverLine.setAttribute('stroke', '#16181c'); hoverLine.setAttribute('stroke-width', '1');
+    hoverLine.setAttribute('stroke-dasharray', '3,3'); hoverLine.setAttribute('opacity', '0');
+    hoverLine.setAttribute('pointer-events', 'none');
+    svg.appendChild(hoverLine);
+
+    const hoverDot = document.createElementNS(svgNS,'circle');
+    hoverDot.setAttribute('r', '4.5'); hoverDot.setAttribute('fill', '#16181c');
+    hoverDot.setAttribute('stroke', '#fff'); hoverDot.setAttribute('stroke-width', '1.5');
+    hoverDot.setAttribute('opacity', '0'); hoverDot.setAttribute('pointer-events', 'none');
+    svg.appendChild(hoverDot);
+
+    const tooltip = document.getElementById(plotId + '-tip');
+
+    function indexFromClientX(clientX){
+      const rect = svg.getBoundingClientRect();
+      const frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+      const vbX = frac * W;
+      const approx = Math.round(((vbX - padL) / plotW) * (points.length - 1));
+      return Math.min(points.length - 1, Math.max(0, approx));
+    }
+
+    function showHover(clientX){
+      const idx = indexFromClientX(clientX);
+      const px = xOf(idx), py = yOf(points[idx].y);
+      hoverLine.setAttribute('x1', px); hoverLine.setAttribute('x2', px); hoverLine.setAttribute('opacity', '1');
+      hoverDot.setAttribute('cx', px); hoverDot.setAttribute('cy', py); hoverDot.setAttribute('opacity', '1');
+      if(tooltip){
+        tooltip.textContent = `${monthYearLabel(yms[idx])} · ${nearestTier(points[idx].y)} tier (${points[idx].y.toFixed(2)})`;
+        tooltip.style.left = (px / W * 100) + '%';
+        tooltip.style.top = (py / H * 100) + '%';
+        tooltip.style.opacity = '1';
+      }
+    }
+    function hideHover(){
+      hoverLine.setAttribute('opacity', '0');
+      hoverDot.setAttribute('opacity', '0');
+      if(tooltip) tooltip.style.opacity = '0';
+    }
+
+    svg.style.touchAction = 'pan-y';
+    svg.addEventListener('pointermove', e => showHover(e.clientX));
+    svg.addEventListener('pointerdown', e => showHover(e.clientX));
+    svg.addEventListener('pointerleave', hideHover);
+    svg.addEventListener('pointerup', e => { if(e.pointerType === 'touch') setTimeout(hideHover, 1500); });
+  }
 }
 
 // ---- tier-scoring functions, matching your JET Index Legend exactly ----
@@ -564,11 +636,13 @@ const monthly = [
   ['2026-07',0.38,40.01,1.23,1.59],['2026-08',0.46,41.12,1.07,1.64],['2026-09',0.46,40.58,1.01,1.64],
 ];
 const allPoints = monthly.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
-drawHistoryChart('plotLong','xLong', allPoints, ['1977','1990','2000','2010','2020','2026'], 170);
+const allYms = monthly.map(r=>r[0]);
+drawHistoryChart('plotLong','xLong', allPoints, ['1977','1990','2000','2010','2020','2026'], 170, allYms);
 
 const recent36 = monthly.slice(-36);
 const recentPoints = recent36.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
-drawHistoryChart('plotRecent','xRecent', recentPoints, ['Oct23','Oct24','Oct25','Sep26'], 150);
+const recentYms = recent36.map(r=>r[0]);
+drawHistoryChart('plotRecent','xRecent', recentPoints, ['Oct23','Oct24','Oct25','Sep26'], 150, recentYms);
 
 // ---- Credit-stress overlay ----
 // Not blended into the composite (backtesting showed the spread's *level* mostly dilutes the
