@@ -385,8 +385,8 @@ document.getElementById('scoreChanged').innerHTML = `<span class="dot"></span>Sc
 document.getElementById('dataCheckedFooter').textContent = `Data last checked ${formatChecked(LAST_CHECKED_ISO)}`;
 
 // TODO: replace with the real published Google Form action URL + email field entry ID.
-const NOTIFY_FORM_ACTION = 'REPLACE_WITH_GOOGLE_FORM_ACTION_URL';
-const NOTIFY_EMAIL_ENTRY = 'REPLACE_WITH_ENTRY_ID';
+const NOTIFY_FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSfaZjDep_b_3AonjcAHuGRoJ1uUDo9Lm2js-T6hRc4PJj4fNg/formResponse';
+const NOTIFY_EMAIL_ENTRY = 'entry.291947718';
 document.getElementById('notifyForm').addEventListener('submit', function(e){
   e.preventDefault();
   const emailInput = document.getElementById('notifyEmail');
