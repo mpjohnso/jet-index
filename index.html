@@ -1092,7 +1092,28 @@ const ERAS = [
   ['2025-01','2026-08','the continuing AI-capex boom, with valuations near record highs'],
   ['2026-09','2026-09','the Fed reversing to a rate hike on an oil-driven inflation shock, even as AI-fueled valuations sit near record highs'],
 ];
-function getEra(ym){ for(const [s,e,label] of ERAS){ if(ym>=s && ym<=e) return label; } return null; }
+function pctBelow(values, v){ return values.filter(x => x < v).length / values.length * 100; }
+
+// Live, numbers-only caption for whatever month is currently "today" (the last row in
+// `monthly`). The hand-written ERAS blurbs below are fine for settled history, but the
+// current month is still updating in place as new data comes in each day -- a hand-written
+// narrative attached to it would drift out of sync with the live numbers. This is generated
+// fresh from the same data every time, so it can never go stale, and it automatically stops
+// applying (falling back to a real ERAS entry, if one exists) the moment a new month rolls in
+// and this one becomes settled history.
+function liveTodayCaption(row){
+  const pePct = Math.round(pctBelow(monthly.map(r=>r[2]), row[2]));
+  const ycPct = Math.round(pctBelow(monthly.map(r=>r[1]), row[1]));
+  const ecyPct = Math.round(pctBelow(monthly.map(r=>r[3]), row[3]));
+  // Lowercase noun-phrase fragment, matching the ERAS entries' grammar, so it drops into
+  // the same "sits within X" / "fell during X" / standalone-caption slots without a rewrite.
+  return `the current month &mdash; valuations richer than ${pePct}% of months since 1977, the yield curve steeper than ${ycPct}% of months, and the equity risk premium (ECY) wider than ${ecyPct}% of months (live figures, not a fixed description)`;
+}
+
+function getEra(ym){
+  if(ym === rowNow[0]) return liveTodayCaption(rowNow);
+  for(const [s,e,label] of ERAS){ if(ym>=s && ym<=e) return label; } return null;
+}
 
 function scoresFor(row){ return [scoreYC(row[1]), scorePE(row[2]), scoreEY(row[3])]; }
 function compositeForRow(row){ return composite(row[1],row[2],row[3]); }
