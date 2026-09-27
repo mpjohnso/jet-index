@@ -349,7 +349,7 @@ function renderMeterContinuous(containerId, score){
 function nearestTier(score){ return ORDER[Math.max(0,Math.min(6,Math.round(score)-1))]; }
 
 // Current reading, computed live from the real current inputs (same values as the metric cards)
-const CURRENT_YC = 0.46, CURRENT_PE = 40.58, CURRENT_ECY = 1.01;
+const CURRENT_YC = 0.46, CURRENT_PE = 40.48, CURRENT_ECY = 1.01;
 const heroScore = composite(CURRENT_YC, CURRENT_PE, CURRENT_ECY);
 const heroTier = nearestTier(heroScore);
 document.getElementById('heroScoreText').textContent = `weighted score ${heroScore.toFixed(2)} / 7`;
