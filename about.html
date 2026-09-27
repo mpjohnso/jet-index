@@ -176,6 +176,7 @@
     const monthly = Function('"use strict"; return (' + m[1] + ');')();
 
     const TIER_COLOR = {S:'#e0473d',A:'#ef8f1e',B:'#f3cf3d',C:'#4fae59',D:'#63b8de',E:'#2f6fb0',F:'#c92f86'};
+    const TIER_TEXT  = {S:'#fff',A:'#fff',B:'#2b2200',C:'#fff',D:'#0b2733',E:'#fff',F:'#fff'};
     const ORDER = ['F','E','D','C','B','A','S'];
     function nearestTier(score){ return ORDER[Math.max(0,Math.min(6,Math.round(score)-1))]; }
     function scoreYC(v){ return v>=3?7 : v>=2?6 : v>=1?5 : v>=0.5?4 : v>=0.25?3 : v>=0?2 : 1; }
@@ -237,10 +238,19 @@
         rect.setAttribute('fill', TIER_COLOR[letter]); rect.setAttribute('opacity','0.13');
         svg.appendChild(rect);
         if(level>=yMin && level<=yMax){
+          const boxW = 17, boxH = 14;
+          const boxX = 3, boxY = yOf(level) - boxH/2;
+          const chipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+          chipRect.setAttribute('x', boxX); chipRect.setAttribute('y', boxY);
+          chipRect.setAttribute('width', boxW); chipRect.setAttribute('height', boxH);
+          chipRect.setAttribute('rx', 3.5);
+          chipRect.setAttribute('fill', TIER_COLOR[letter]);
+          svg.appendChild(chipRect);
           const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-          txt.setAttribute('x', 4); txt.setAttribute('y', yOf(level)+4);
-          txt.setAttribute('font-size','11'); txt.setAttribute('font-weight','700');
-          txt.setAttribute('fill', TIER_COLOR[letter]); txt.setAttribute('font-family','JetBrains Mono, monospace');
+          txt.setAttribute('x', boxX + boxW/2); txt.setAttribute('y', boxY + boxH/2 + 3.5);
+          txt.setAttribute('font-size','10'); txt.setAttribute('font-weight','700');
+          txt.setAttribute('fill', TIER_TEXT[letter]); txt.setAttribute('font-family','JetBrains Mono, monospace');
+          txt.setAttribute('text-anchor','middle');
           txt.textContent = letter;
           svg.appendChild(txt);
         }
