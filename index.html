@@ -176,18 +176,17 @@
   .hero-mark{position:absolute; top:-22px; right:-22px; width:134px; height:134px; color:var(--ink); opacity:0.07; pointer-events:none;}
   .footer-mark{display:block; width:26px; height:26px; margin:26px auto 0; color:var(--ink); opacity:0.35;}
 
-  .notify-card{padding:16px 18px 18px; margin-bottom:14px;}
-  .notify-title{font-size:14px; font-weight:600; margin-bottom:6px;}
-  .notify-desc{font-size:12px; color:var(--sub); line-height:1.5; margin-bottom:12px;}
-  .notify-form{display:flex; gap:8px;}
-  .notify-input{flex:1; min-width:0; font-size:13px; padding:9px 11px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink);}
+  .notify-menu{width:260px; padding:14px;}
+  .notify-title{font-size:13.5px; font-weight:600; margin-bottom:6px;}
+  .notify-desc{font-size:11.5px; color:var(--sub); line-height:1.5; margin-bottom:12px;}
+  .notify-form{display:flex; flex-direction:column; gap:8px;}
+  .notify-input{width:100%; font-size:13px; padding:9px 11px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink);}
   .notify-input:focus{outline:2px solid var(--ink); outline-offset:1px;}
-  .notify-btn{padding:9px 16px; border:none; border-radius:8px; background:var(--ink); color:#fff; font-family:'Oswald',sans-serif; font-weight:600; font-size:13px; letter-spacing:0.01em; cursor:pointer; white-space:nowrap;}
+  .notify-btn{width:100%; padding:9px 16px; border:none; border-radius:8px; background:var(--ink); color:#fff; font-family:'Oswald',sans-serif; font-weight:600; font-size:13px; letter-spacing:0.01em; cursor:pointer; white-space:nowrap;}
   .notify-btn:active{opacity:0.85;}
   .notify-status{font-size:12px; margin-top:10px; line-height:1.4;}
   .notify-status.ok{color:var(--favorable); font-weight:600;}
   .notify-status.err{color:var(--unfavorable); font-weight:600;}
-  @media (max-width:420px){ .notify-form{flex-direction:column;} }
 
   .tier-legend{padding:16px 18px 6px; margin-bottom:14px;}
   .tier-legend-title{font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--sub); margin-bottom:10px;}
@@ -259,18 +258,20 @@
           <button type="button" class="share-menu-item" id="shareCopyBtn">Copy link</button>
         </div>
       </div>
+      <div class="share-wrap">
+        <button type="button" class="share-btn" id="notifyBtn" aria-haspopup="true" aria-expanded="false">Get notified</button>
+        <div class="share-menu notify-menu" id="notifyMenu" hidden>
+          <div class="notify-title">Get notified when the score changes</div>
+          <div class="notify-desc">We'll email you whenever the composite reading actually moves &mdash; not a daily check-in, just real changes.</div>
+          <form class="notify-form" id="notifyForm">
+            <input type="email" id="notifyEmail" class="notify-input mono" placeholder="you@email.com" required>
+            <button type="submit" class="notify-btn">Notify me</button>
+          </form>
+          <div class="notify-status" id="notifyStatus"></div>
+        </div>
+      </div>
       <span class="share-copied" id="shareCopied" aria-live="polite"></span>
     </div>
-  </div>
-
-  <div class="card notify-card">
-    <div class="notify-title">Get notified when the score changes</div>
-    <div class="notify-desc">Leave your email and we'll send you a note whenever the composite reading actually moves &mdash; not a daily check-in, just real changes.</div>
-    <form class="notify-form" id="notifyForm">
-      <input type="email" id="notifyEmail" class="notify-input mono" placeholder="you@email.com" required>
-      <button type="submit" class="notify-btn">Notify me</button>
-    </form>
-    <div class="notify-status" id="notifyStatus"></div>
   </div>
 
   <div class="card tier-legend">
@@ -894,6 +895,47 @@ if(heroPastRuns.length === 0){
 }
 document.getElementById('heroStreak').innerHTML = heroStreakText;
 
+// ---- Shared dropdown plumbing for the hero-actions row (Share / Get notified) -- both ----
+// live in the same row now instead of "Get notified" being its own separate card, so they
+// share one open/close/positioning system: position:fixed (the hero card has overflow:hidden
+// for its watermark, which would otherwise clip an absolutely-positioned dropdown), closing
+// whichever menu is open when the other opens, on outside click, Escape, or scroll.
+const heroDropdowns = [];
+function makeDropdown(btnId, menuId){
+  const btn = document.getElementById(btnId);
+  const menu = document.getElementById(menuId);
+  const api = {
+    btn, menu,
+    close(){
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    },
+    open(){
+      heroDropdowns.forEach(d => { if(d !== api) d.close(); });
+      const rect = btn.getBoundingClientRect();
+      const menuWidth = menu.offsetWidth || parseInt(getComputedStyle(menu).width, 10) || 200;
+      let left = rect.left;
+      if(left + menuWidth > window.innerWidth - 12) left = window.innerWidth - menuWidth - 12;
+      if(left < 12) left = 12;
+      menu.style.top = (rect.bottom + 6) + 'px';
+      menu.style.left = left + 'px';
+      menu.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+    },
+    toggle(){ if(menu.hidden) api.open(); else api.close(); },
+  };
+  heroDropdowns.push(api);
+  return api;
+}
+function closeAllHeroDropdowns(){ heroDropdowns.forEach(d => d.close()); }
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.share-wrap')) closeAllHeroDropdowns();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeAllHeroDropdowns();
+});
+window.addEventListener('scroll', closeAllHeroDropdowns, true);
+
 // ---- Share button: on mobile, jump straight to the OS share sheet (Messages, WhatsApp, ----
 // Mail, etc. all in one native picker -- nothing to build). Everywhere else, show a small
 // menu of the specific channels people actually use to share a link like this.
@@ -915,27 +957,13 @@ document.getElementById('heroStreak').innerHTML = heroStreakText;
   document.getElementById('shareEmail').href =
     `mailto:?subject=${encodeURIComponent('JET Index reading')}&body=${encodeURIComponent(shareTextAndUrl)}`;
 
-  const btn = document.getElementById('shareBtn');
-  const menu = document.getElementById('shareMenu');
   const copiedEl = document.getElementById('shareCopied');
-
   function showCopied(){
     copiedEl.textContent = 'Link copied';
     setTimeout(()=>{ copiedEl.textContent=''; }, 2200);
   }
-  function closeMenu(){
-    menu.hidden = true;
-    btn.setAttribute('aria-expanded', 'false');
-    window.removeEventListener('scroll', closeMenu, true);
-  }
-  function openMenu(){
-    const rect = btn.getBoundingClientRect();
-    menu.style.top = (rect.bottom + 6) + 'px';
-    menu.style.left = rect.left + 'px';
-    menu.hidden = false;
-    btn.setAttribute('aria-expanded', 'true');
-    window.addEventListener('scroll', closeMenu, true);
-  }
+
+  const shareDropdown = makeDropdown('shareBtn', 'shareMenu');
 
   document.getElementById('shareCopyBtn').addEventListener('click', async function(){
     try{
@@ -944,26 +972,34 @@ document.getElementById('heroStreak').innerHTML = heroStreakText;
     }catch(e){
       window.prompt('Copy this link:', shareTextAndUrl);
     }
-    closeMenu();
+    shareDropdown.close();
   });
 
-  menu.querySelectorAll('a.share-menu-item').forEach(a => a.addEventListener('click', closeMenu));
+  shareDropdown.menu.querySelectorAll('a.share-menu-item').forEach(a => a.addEventListener('click', () => shareDropdown.close()));
 
-  btn.addEventListener('click', async function(){
+  shareDropdown.btn.addEventListener('click', async function(e){
     // Prefer the native share sheet where one exists (mobile Safari/Chrome, some desktop
     // browsers) -- it already covers Messages, WhatsApp, Mail and more in one OS-native picker.
     if(navigator.share){
-      try{ await navigator.share({title:'JET Index', text:shareText, url:shareUrl}); return; }
-      catch(e){ return; /* user cancelled the native share sheet */ }
+      e.stopPropagation();
+      try{ await navigator.share({title:'JET Index', text:shareText, url:shareUrl}); }
+      catch(err){ /* user cancelled the native share sheet */ }
+      return;
     }
-    if(menu.hidden) openMenu(); else closeMenu();
+    e.stopPropagation();
+    shareDropdown.toggle();
   });
+})();
 
-  document.addEventListener('click', function(e){
-    if(!menu.hidden && !e.target.closest('.share-wrap')) closeMenu();
-  });
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape') closeMenu();
+// ---- Get-notified button: same dropdown pattern as Share, so the signup form sits in the ----
+// same row instead of breaking up the page as its own full-width card between the hero and
+// the tier guide.
+(function(){
+  const notifyDropdown = makeDropdown('notifyBtn', 'notifyMenu');
+  notifyDropdown.btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    notifyDropdown.toggle();
+    if(!notifyDropdown.menu.hidden) document.getElementById('notifyEmail').focus();
   });
 })();
 
