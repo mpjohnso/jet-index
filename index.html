@@ -531,6 +531,16 @@ function findYearIdx(yms, year){
 // spread evenly across the width, which misaligns whenever the labeled years/months aren't evenly spaced.
 function drawHistoryChart(plotId, xlabelId, points, labelSpecs, height, yms, peaks){
   const svg = document.getElementById(plotId);
+  // This can be called more than once on the same <svg> (e.g. the range-tab selector
+  // re-rendering the recent-trend chart) -- clear everything from the previous draw first,
+  // including the hover listeners added below, or old and new draws layer on top of each other.
+  const freshSvg = svg.cloneNode(false);
+  svg.replaceWith(freshSvg);
+  return drawHistoryChartInto(freshSvg, plotId, xlabelId, points, labelSpecs, height, yms, peaks);
+}
+function drawHistoryChartInto(svg, plotId, xlabelId, points, labelSpecs, height, yms, peaks){
+  const tip = document.getElementById(plotId + '-tip');
+  if(tip) tip.style.opacity = '0';
   const W = 560, H = height;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   const ys = points.map(p=>p.y);
