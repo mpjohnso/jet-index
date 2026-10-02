@@ -428,6 +428,35 @@ function renderMeterContinuous(containerId, score){
 }
 function nearestTier(score){ return ORDER[Math.max(0,Math.min(6,Math.round(score)-1))]; }
 
+// Turns a raw metric value into a continuous 1-7 position, same scale as composite(), so its
+// meter marker sits exactly as close to a tier boundary as the underlying number actually is,
+// instead of always parking at the center of whichever tier it's currently in.
+// `breakpoints` are the metric's own tier thresholds in ascending value order (e.g. YC's
+// [0,0.25,0.5,1,2,3]); `descending=true` for metrics where a higher value scores worse (PE).
+// The two open-ended end tiers (score 1 and 7) have no real outer edge, so the marker's room
+// to move within them is borrowed from the width of the adjacent finite tier.
+function continuousMetricScore(value, breakpoints, descending){
+  const n = breakpoints.length;
+  let segIdx = 0;
+  for(let i=0;i<n;i++){
+    if(descending ? value > breakpoints[i] : value >= breakpoints[i]) segIdx = i+1;
+  }
+  const tierScore = descending ? (n+1-segIdx) : (segIdx+1);
+  let lo, hi;
+  if(segIdx === 0){
+    hi = breakpoints[0];
+    lo = hi - (breakpoints[1]-breakpoints[0]);
+  } else if(segIdx === n){
+    lo = breakpoints[n-1];
+    hi = lo + (breakpoints[n-1]-breakpoints[n-2]);
+  } else {
+    lo = breakpoints[segIdx-1]; hi = breakpoints[segIdx];
+  }
+  const frac = Math.max(0, Math.min(1, (value-lo)/(hi-lo))); // 0 at lo, 1 at hi
+  const within = descending ? (0.5-frac) : (frac-0.5); // -0.5..+0.5 across the tier's width
+  return Math.max(1, Math.min(7, tierScore + within));
+}
+
 // Current reading, computed live from the real current inputs (same values as the metric cards)
 const CURRENT_YC = 0.34, CURRENT_PE = 40.58, CURRENT_ECY = 1.01;
 // What each input was immediately before the most recent change -- lets the page show
@@ -489,9 +518,9 @@ document.getElementById('notifyForm').addEventListener('submit', function(e){
       statusEl.className = 'notify-status err';
     });
 });
-setChip('chipYC','D'); renderMeter('meterYC','D');
-setChip('chipPE','F'); renderMeter('meterPE','F');
-setChip('chipEY','E'); renderMeter('meterEY','E');
+setChip('chipYC','D'); renderMeterContinuous('meterYC', continuousMetricScore(CURRENT_YC, [0,0.25,0.5,1,2,3], false));
+setChip('chipPE','F'); renderMeterContinuous('meterPE', continuousMetricScore(CURRENT_PE, [10,15,20,24,28,34], true));
+setChip('chipEY','E'); renderMeterContinuous('meterEY', continuousMetricScore(CURRENT_ECY, [1,2,3,5,7,10], false));
 
 const TIER_DESC = {
   S:'Rare bargain conditions — the strongest historical forward returns.',
