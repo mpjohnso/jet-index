@@ -22,33 +22,35 @@ TIER_WORD = {
 }
 
 
+# Thresholds updated 2026-10-02 -- must match scoreYC/scorePE/scoreEY in index.html and
+# about.html exactly.
 def score_yc(v):
-    if v >= 3: return 7
+    if v >= 2.5: return 7
     if v >= 2: return 6
     if v >= 1: return 5
     if v >= 0.5: return 4
-    if v >= 0.25: return 3
-    if v >= 0: return 2
+    if v >= 0: return 3
+    if v >= -1: return 2
     return 1
 
 
 def score_pe(v):
     if v <= 10: return 7
-    if v <= 15: return 6
-    if v <= 20: return 5
-    if v <= 24: return 4
-    if v <= 28: return 3
-    if v <= 34: return 2
+    if v <= 16: return 6
+    if v <= 22: return 5
+    if v <= 28: return 4
+    if v <= 34: return 3
+    if v <= 40: return 2
     return 1
 
 
 def score_ey(v):
-    if v >= 10: return 7
+    if v >= 9: return 7
     if v >= 7: return 6
     if v >= 5: return 5
     if v >= 3: return 4
-    if v >= 2: return 3
-    if v >= 1: return 2
+    if v >= 1: return 3
+    if v >= 0: return 2
     return 1
 
 
