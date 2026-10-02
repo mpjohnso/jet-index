@@ -529,16 +529,16 @@ function findYearIdx(yms, year){
 // `labelSpecs` is an array of {idx, text}: idx is the exact data-point index the label refers to,
 // so the printed label is always pinned to where that point actually sits on the line -- not just
 // spread evenly across the width, which misaligns whenever the labeled years/months aren't evenly spaced.
-function drawHistoryChart(plotId, xlabelId, points, labelSpecs, height, yms, peaks){
+function drawHistoryChart(plotId, xlabelId, points, labelSpecs, height, yms, peaks, gridIdxs){
   const svg = document.getElementById(plotId);
   // This can be called more than once on the same <svg> (e.g. the range-tab selector
   // re-rendering the recent-trend chart) -- clear everything from the previous draw first,
   // including the hover listeners added below, or old and new draws layer on top of each other.
   const freshSvg = svg.cloneNode(false);
   svg.replaceWith(freshSvg);
-  return drawHistoryChartInto(freshSvg, plotId, xlabelId, points, labelSpecs, height, yms, peaks);
+  return drawHistoryChartInto(freshSvg, plotId, xlabelId, points, labelSpecs, height, yms, peaks, gridIdxs);
 }
-function drawHistoryChartInto(svg, plotId, xlabelId, points, labelSpecs, height, yms, peaks){
+function drawHistoryChartInto(svg, plotId, xlabelId, points, labelSpecs, height, yms, peaks, gridIdxs){
   const tip = document.getElementById(plotId + '-tip');
   if(tip) tip.style.opacity = '0';
   const W = 560, H = height;
@@ -581,6 +581,20 @@ function drawHistoryChartInto(svg, plotId, xlabelId, points, labelSpecs, height,
       svg.appendChild(txt);
     }
   }
+  // Light reference gridlines (month/quarter/year, depending on range) so a point on the
+  // line can be read off against a specific point in time without needing to hover.
+  if(gridIdxs && gridIdxs.length){
+    gridIdxs.forEach(idx=>{
+      const px = xOf(idx);
+      const gline = document.createElementNS('http://www.w3.org/2000/svg','line');
+      gline.setAttribute('x1', px); gline.setAttribute('x2', px);
+      gline.setAttribute('y1', padTop); gline.setAttribute('y2', H - padBottom);
+      gline.setAttribute('stroke', '#16181c'); gline.setAttribute('stroke-width', '1');
+      gline.setAttribute('stroke-dasharray', '2,3'); gline.setAttribute('opacity', '0.14');
+      svg.appendChild(gline);
+    });
+  }
+
   // Pre-downturn market peaks: a dashed marker at the month the market topped out just
   // before a major decline, so a viewer can see where the index stood right before each one.
   if(peaks && peaks.length && yms){
@@ -1057,6 +1071,32 @@ function pickLabelIdxs(n, maxLabels){
   return [...new Set(idxs)];
 }
 
+// Light vertical reference lines behind the chart line, one per month/quarter/year/decade
+// depending on the selected range -- denser cadences would clutter a wide range, sparser
+// ones would leave a narrow range with nothing to line a point up against.
+function computeGridIdxs(yms, rangeKey){
+  if(rangeKey === 'all'){
+    const idxs = [];
+    for(let y=1980; y<2030; y+=10){
+      const idx = yms.indexOf(`${y}-01`);
+      if(idx !== -1) idxs.push(idx);
+    }
+    return idxs;
+  }
+  if(rangeKey === '10y'){
+    const idxs = [];
+    yms.forEach((ym,i)=>{ if(ym.slice(5,7) === '01') idxs.push(i); }); // one per calendar year
+    return idxs;
+  }
+  const everyN = rangeKey === '1y' ? 1 : 3; // monthly for 1Y, quarterly for 3Y/5Y
+  const idxs = [];
+  yms.forEach((ym,i)=>{
+    const m = parseInt(ym.slice(5,7),10);
+    if((m-1) % everyN === 0) idxs.push(i);
+  });
+  return idxs;
+}
+
 function renderRecentChart(rangeKey){
   const opt = RANGE_OPTIONS[rangeKey] || RANGE_OPTIONS[DEFAULT_RANGE];
   const slice = opt.months ? monthly.slice(-opt.months) : monthly;
@@ -1075,7 +1115,8 @@ function renderRecentChart(rangeKey){
     labelSpecs = idxs.map(idx=>({idx, text: monthYearLabelShort(yms[idx])}));
   }
 
-  drawHistoryChart('plotRecent','xRecent', points, labelSpecs, 260, yms);
+  const gridIdxs = computeGridIdxs(yms, rangeKey);
+  drawHistoryChart('plotRecent','xRecent', points, labelSpecs, 260, yms, undefined, gridIdxs);
   document.getElementById('recentSectionTitle').textContent = opt.title;
   document.querySelectorAll('#rangeTabs .range-tab').forEach(btn=>{
     btn.classList.toggle('active', btn.dataset.range === rangeKey);
