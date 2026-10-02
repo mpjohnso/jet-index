@@ -65,6 +65,30 @@ def _fmt(v, suffix=""):
     return f"{v}{suffix}"
 
 
+# Hex twins of the site's CSS vars (--favorable / --unfavorable / --sub) -- email clients
+# can't use CSS custom properties, so these are hand-kept in sync with index.html.
+FAVORABLE = "#2f9e44"
+UNFAVORABLE = "#c0392b"
+MUTED = "#71757d"
+
+
+def _direction(old_v, new_v, higher_is_better):
+    """How one input moved, in margin-of-safety terms (not just raw sign) -- e.g. a Shiller
+    PE going up is a worsening even though the number itself increased."""
+    if new_v == old_v:
+        return "▬", "unchanged", MUTED
+    moved_up = new_v > old_v
+    improved = moved_up == higher_is_better
+    arrow = "▲" if moved_up else "▼"
+    color = FAVORABLE if improved else UNFAVORABLE
+    return arrow, ("improved" if improved else "worsened"), color
+
+
+def _direction_cell(old_v, new_v, higher_is_better):
+    arrow, word, color = _direction(old_v, new_v, higher_is_better)
+    return f'<span style="color:{color}; font-weight:700;">{arrow} {word}</span>'
+
+
 def send_change_notifications(old, new):
     """old/new are (yc, pe, ecy) tuples. Emails every subscriber about the change."""
     api_key = os.environ.get("RESEND_API_KEY")
@@ -84,6 +108,7 @@ def send_change_notifications(old, new):
     new_score = composite(new_yc, new_pe, new_ecy)
     old_tier = tier_for_score(old_score)
     new_tier = tier_for_score(new_score)
+    tier_changed = old_tier != new_tier
 
     def _chip_cell(tier, score, caption):
         """One colored tier chip + its caption, as a small standalone table -- table-based
@@ -99,13 +124,12 @@ def send_change_notifications(old, new):
         <div style="font-size:12.5px; color:#16181c; font-weight:700; text-align:center;">{score:.2f} / 7</div>
         """
 
-    subject = f"JET Index: now {new_tier} tier ({TIER_WORD[new_tier]}), {new_score:.2f} / 7"
-
-    body_html = f"""
-    <div style="font-family:-apple-system,Helvetica,Arial,sans-serif; max-width:480px; margin:0 auto; color:#16181c;">
-      <h2 style="margin-bottom:4px; font-size:19px;">The JET Index reading just changed</h2>
-      <p style="font-size:13.5px; color:#71757d; margin-top:0;">One or more of the three inputs moved enough to update today's composite reading.</p>
-
+    if tier_changed:
+        # The headline event: the tier letter itself moved. Big, unmissable before/after.
+        subject = f"JET Index: tier changed to {new_tier} ({TIER_WORD[new_tier]}), {new_score:.2f} / 7"
+        headline = f"The tier just changed: {old_tier} &rarr; {new_tier}"
+        subhead = "The composite reading moved enough to flip the overall tier letter."
+        chip_block = f"""
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
         <tr>
           <td width="42%" align="center" style="vertical-align:top;">{_chip_cell(old_tier, old_score, 'Before')}</td>
@@ -113,31 +137,53 @@ def send_change_notifications(old, new):
           <td width="42%" align="center" style="vertical-align:top;">{_chip_cell(new_tier, new_score, 'Now')}</td>
         </tr>
       </table>
+        """
+    else:
+        # A quieter event: an input moved, but not enough to change the overall tier.
+        subject = f"JET Index: inputs updated — still {new_tier} tier"
+        headline = f"Still {new_tier} tier"
+        subhead = "One or more inputs moved today, but not enough to change the overall tier."
+        chip_block = f"""
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px auto;">
+        <tr><td align="center">{_chip_cell(new_tier, new_score, 'Current')}</td></tr>
+      </table>
+        """
+
+    body_html = f"""
+    <div style="font-family:-apple-system,Helvetica,Arial,sans-serif; max-width:480px; margin:0 auto; color:#16181c;">
+      <h2 style="margin-bottom:4px; font-size:19px;">{headline}</h2>
+      <p style="font-size:13.5px; color:#71757d; margin-top:0;">{subhead}</p>
+
+      {chip_block}
 
       <table style="width:100%; font-size:13.5px; border-collapse:collapse; margin:18px 0;">
         <tr style="border-bottom:1.5px solid #16181c;">
           <th align="left" style="padding:6px 4px;">Input</th>
           <th align="left" style="padding:6px 4px;">Before</th>
           <th align="left" style="padding:6px 4px;">Now</th>
+          <th align="left" style="padding:6px 4px;">Direction</th>
         </tr>
         <tr style="border-bottom:1px dashed #e7e2d8;">
           <td style="padding:6px 4px;">2s10s Yield Curve</td>
           <td style="padding:6px 4px;">{_fmt(old_yc, '%')}</td>
           <td style="padding:6px 4px; font-weight:700;">{_fmt(new_yc, '%')}</td>
+          <td style="padding:6px 4px;">{_direction_cell(old_yc, new_yc, True)}</td>
         </tr>
         <tr style="border-bottom:1px dashed #e7e2d8;">
           <td style="padding:6px 4px;">Shiller PE (CAPE)</td>
           <td style="padding:6px 4px;">{_fmt(old_pe)}</td>
           <td style="padding:6px 4px; font-weight:700;">{_fmt(new_pe)}</td>
+          <td style="padding:6px 4px;">{_direction_cell(old_pe, new_pe, False)}</td>
         </tr>
         <tr>
           <td style="padding:6px 4px;">Excess CAPE Yield</td>
           <td style="padding:6px 4px;">{_fmt(old_ecy, '%')}</td>
           <td style="padding:6px 4px; font-weight:700;">{_fmt(new_ecy, '%')}</td>
+          <td style="padding:6px 4px;">{_direction_cell(old_ecy, new_ecy, True)}</td>
         </tr>
       </table>
 
-      <p style="font-size:13px; color:#16181c; margin-bottom:14px;">Curious what's actually pushing the reading to {new_tier} tier? The site breaks down each input's percentile rank and recent trend, generated live from today's numbers.</p>
+      <p style="font-size:13px; color:#16181c; margin-bottom:14px;">Curious what's actually pushing the reading? The site breaks down each input's percentile rank and recent trend, generated live from today's numbers.</p>
       <p style="text-align:center; margin:0 0 6px;"><a href="{DRIVING_URL}" style="display:inline-block; background:#16181c; color:#fff; padding:11px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13.5px;">See what's driving this reading &rarr;</a></p>
 
       <p style="color:#71757d; font-size:11.5px; margin-top:28px; border-top:1px dashed #e7e2d8; padding-top:12px;">

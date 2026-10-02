@@ -124,17 +124,30 @@ def main():
     new_ecy = round(ecy, 2) if ecy is not None else cur_ecy
 
     score_changed = (new_yc, new_pe, new_ecy) != (cur_yc, cur_pe, cur_ecy)
+    # Captured before any overwrite, so we can tell later whether this run's change was big
+    # enough to actually flip the tier letter, not just nudge an input within the same tier.
+    old_tier = tier_for_score(composite(cur_yc, cur_pe, cur_ecy))
     if score_changed:
-        html = html.replace(
-            m.group(0),
-            f"const CURRENT_YC = {new_yc}, CURRENT_PE = {new_pe}, CURRENT_ECY = {new_ecy};",
-        )
+        new_current_line = f"const CURRENT_YC = {new_yc}, CURRENT_PE = {new_pe}, CURRENT_ECY = {new_ecy};"
+        html = html.replace(m.group(0), new_current_line)
         changed = True
+
+        # Snapshot what each input was right before this change, so the site can show
+        # whether that specific input moved favorably or unfavorably -- independent of
+        # both the 3-month momentum trend and whether the tier itself moved.
+        prev_line = f"const PREV_YC = {cur_yc}, PREV_PE = {cur_pe}, PREV_ECY = {cur_ecy};"
+        prev_pattern = re.compile(r"const PREV_YC = [\-0-9.]+, PREV_PE = [\-0-9.]+, PREV_ECY = [\-0-9.]+;")
+        if prev_pattern.search(html):
+            html = prev_pattern.sub(prev_line, html)
+        else:
+            html = html.replace(new_current_line, new_current_line + "\n" + prev_line, 1)
 
     # --- Refresh the og:/twitter: description meta tags so social previews always ---
     # show today's actual reading rather than whatever text was last hand-written.
     score = composite(new_yc, new_pe, new_ecy)
     tier = tier_for_score(score)
+    # The headline event: did this run just nudge an input, or actually flip the tier letter?
+    tier_changed = score_changed and (tier != old_tier)
     as_of = datetime.now(timezone.utc).strftime("%B %Y")
     social_desc = (
         f"Current reading: {tier} tier ({TIER_WORD[tier]}), {score:.2f} / 7 as of {as_of}. "
@@ -204,6 +217,19 @@ def main():
             html = html.replace(
                 "const TIER_COLOR =",
                 f"const LAST_CHANGED_ISO = '{now_iso}';\nconst TIER_COLOR =",
+                1,
+            )
+
+    # --- Only stamp "tier last changed" when the resulting tier LETTER actually moved -- ---
+    # this is the headline event the hero card highlights; an input moving within the same
+    # tier only gets the quieter "inputs updated" treatment above.
+    if tier_changed:
+        if "const LAST_TIER_CHANGE_ISO" in html:
+            html = re.sub(r"const LAST_TIER_CHANGE_ISO = '[^']*';", f"const LAST_TIER_CHANGE_ISO = '{now_iso}';", html)
+        else:
+            html = html.replace(
+                "const TIER_COLOR =",
+                f"const LAST_TIER_CHANGE_ISO = '{now_iso}';\nconst TIER_COLOR =",
                 1,
             )
 

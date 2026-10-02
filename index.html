@@ -97,6 +97,8 @@
   .momentum{font-size:11.5px; font-weight:600; margin:4px 0 8px; display:flex; align-items:center; gap:5px;}
   .momentum .arrow{font-size:13px; line-height:1;}
   .momentum .mag{font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:500; color:var(--sub);}
+  .momentum.since-update{margin-top:-4px; opacity:0.85;}
+  .momentum.since-update:empty{margin:0; display:none;}
 
   .compare-card{padding:16px 18px 18px;}
   .compare-sub{font-size:12px; color:var(--sub); margin-bottom:12px; line-height:1.45;}
@@ -293,6 +295,7 @@
       <div class="metric-value-wrap"><span class="metric-value mono">0.34%</span><span class="tier-chip" id="chipYC"></span></div>
     </div>
     <div class="momentum" id="momYC"></div>
+    <div class="momentum since-update" id="sinceYC"></div>
     <div class="meter" id="meterYC"></div>
     <div class="metric-desc">10Y minus 2Y Treasury yield. Both ends have risen sharply this year &mdash; the 10Y is near a 20-year high &mdash; leaving a shallow spread, still below the C-tier line of 0.50%.</div>
   </div>
@@ -303,6 +306,7 @@
       <div class="metric-value-wrap"><span class="metric-value mono">41.1</span><span class="tier-chip" id="chipPE"></span></div>
     </div>
     <div class="momentum" id="momPE"></div>
+    <div class="momentum since-update" id="sincePE"></div>
     <div class="meter" id="meterPE"></div>
     <div class="metric-desc">Price over 10-year real earnings. Past the F-tier line of 40 &mdash; second-highest reading on record.</div>
   </div>
@@ -313,6 +317,7 @@
       <div class="metric-value-wrap"><span class="metric-value mono">1.0%</span><span class="tier-chip" id="chipEY"></span></div>
     </div>
     <div class="momentum" id="momEY"></div>
+    <div class="momentum since-update" id="sinceEY"></div>
     <div class="meter" id="meterEY"></div>
     <div class="metric-desc">Earnings yield over the real 10Y Treasury yield. Thin premium &mdash; the smallest since 2002.</div>
   </div>
@@ -367,6 +372,8 @@
 <script>
 const LAST_CHECKED_ISO = '2026-10-02T11:38:36Z';
 const LAST_CHANGED_ISO = '2026-10-02T11:38:36Z';
+// Bootstrap: treat "now" as the most recent tier-change baseline until a real one is recorded.
+const LAST_TIER_CHANGE_ISO = '2026-10-02T11:38:36Z';
 const TIER_COLOR = {S:'#e0473d',A:'#ef8f1e',B:'#f3cf3d',C:'#4fae59',D:'#63b8de',E:'#2f6fb0',F:'#c92f86'};
 const TIER_TEXT  = {S:'#fff',A:'#fff',B:'#2b2200',C:'#fff',D:'#0b2733',E:'#fff',F:'#fff'};
 const ORDER = ['F','E','D','C','B','A','S']; // worst -> best, left -> right
@@ -398,6 +405,10 @@ function nearestTier(score){ return ORDER[Math.max(0,Math.min(6,Math.round(score
 
 // Current reading, computed live from the real current inputs (same values as the metric cards)
 const CURRENT_YC = 0.34, CURRENT_PE = 40.58, CURRENT_ECY = 1.01;
+// What each input was immediately before the most recent change -- lets the page show
+// whether that specific input moved favorably or unfavorably, independent of the 3-month
+// momentum trend below. Bootstrap: equal to CURRENT_* until the next real change.
+const PREV_YC = 0.34, PREV_PE = 40.58, PREV_ECY = 1.01;
 const heroScore = composite(CURRENT_YC, CURRENT_PE, CURRENT_ECY);
 const heroTier = nearestTier(heroScore);
 document.getElementById('heroScoreText').textContent = `weighted score ${heroScore.toFixed(2)} / 7`;
@@ -410,7 +421,18 @@ function formatChecked(iso){
   const timeStr = d.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', timeZone:'America/Chicago', timeZoneName:'short'});
   return `${dateStr} · ${timeStr}`;
 }
-document.getElementById('scoreChanged').innerHTML = `<span class="dot"></span>Score last changed ${formatChecked(LAST_CHANGED_ISO)}`;
+// Distinguish the two levels of "something changed": the inputs moving (routine) vs the
+// moving enough to flip the overall tier letter (the actually significant event).
+(function(){
+  const el = document.getElementById('scoreChanged');
+  const prevTier = nearestTier(composite(PREV_YC, PREV_PE, PREV_ECY));
+  const tierJustChanged = LAST_TIER_CHANGE_ISO === LAST_CHANGED_ISO && prevTier !== heroTier;
+  if(tierJustChanged){
+    el.innerHTML = `<span class="dot" style="background:${TIER_COLOR[heroTier]}"></span><b>Tier changed: ${prevTier} &rarr; ${heroTier}</b> on ${formatChecked(LAST_TIER_CHANGE_ISO)}`;
+  } else {
+    el.innerHTML = `<span class="dot" style="background:var(--sub)"></span>Inputs updated ${formatChecked(LAST_CHANGED_ISO)} &mdash; still ${heroTier} tier`;
+  }
+})();
 document.getElementById('dataCheckedFooter').textContent = `Data last checked ${formatChecked(LAST_CHECKED_ISO)}`;
 
 // TODO: replace with the real published Google Form action URL + email field entry ID.
@@ -1036,7 +1058,7 @@ const idxThen = idxNow - LOOKBACK;
 const rowNow = monthly[idxNow], rowThen = monthly[idxThen];
 
 function renderMomentum(containerId, deltaRaw, opts){
-  const {flatEps, favorableWhenPositive, unitFmt, upWord, downWord} = opts;
+  const {flatEps, favorableWhenPositive, unitFmt, upWord, downWord, label} = opts;
   const el = document.getElementById(containerId);
   let arrow, word, colorVar;
   if(Math.abs(deltaRaw) < flatEps){
@@ -1049,7 +1071,16 @@ function renderMomentum(containerId, deltaRaw, opts){
     colorVar = favorableWhenPositive ? 'var(--unfavorable)' : 'var(--favorable)';
   }
   const magText = unitFmt(deltaRaw);
-  el.innerHTML = `<span class="arrow" style="color:${colorVar}">${arrow}</span><span style="color:${colorVar}">${word}</span><span class="mag">${magText} vs 3mo ago</span>`;
+  el.innerHTML = `<span class="arrow" style="color:${colorVar}">${arrow}</span><span style="color:${colorVar}">${word}</span><span class="mag">${magText} ${label || 'vs 3mo ago'}</span>`;
+}
+
+// Whether a single input moved favorably or unfavorably the last time it actually changed --
+// distinct from the 3-month trend above, and distinct from whether that move was big enough
+// to shift the overall tier. Hidden entirely when nothing has changed since the last snapshot.
+function renderSinceChange(containerId, prevVal, curVal, opts){
+  const el = document.getElementById(containerId);
+  if(prevVal === curVal){ el.innerHTML = ''; return; }
+  renderMomentum(containerId, curVal - prevVal, Object.assign({}, opts, {flatEps: 0, label: 'since last update'}));
 }
 
 renderMomentum('momYC', rowNow[1]-rowThen[1], {
@@ -1073,6 +1104,19 @@ renderMomentum('momHero', scoreNow-scoreThen, {
   flatEps: 0.08, favorableWhenPositive: true,
   unitFmt: d => `${d>=0?'+':''}${d.toFixed(2)}`,
   upWord: 'improving', downWord: 'softening'
+});
+
+renderSinceChange('sinceYC', PREV_YC, CURRENT_YC, {
+  favorableWhenPositive: true, unitFmt: d => `${d>=0?'+':''}${d.toFixed(2)}pp`,
+  upWord: 'steepened', downWord: 'flattened'
+});
+renderSinceChange('sincePE', PREV_PE, CURRENT_PE, {
+  favorableWhenPositive: false, unitFmt: d => `${d>=0?'+':''}${d.toFixed(1)}`,
+  upWord: 'got richer', downWord: 'got cheaper'
+});
+renderSinceChange('sinceEY', PREV_ECY, CURRENT_ECY, {
+  favorableWhenPositive: true, unitFmt: d => `${d>=0?'+':''}${d.toFixed(2)}pp`,
+  upWord: 'widened', downWord: 'narrowed'
 });
 
 // ---- "What's driving this reading" -- fully generated from the current numbers, ----
