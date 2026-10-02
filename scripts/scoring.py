@@ -7,6 +7,8 @@ here too -- there's no single source of truth shared between the two
 languages, so this is the one place on the Python side to keep in sync.
 """
 
+import math
+
 TIER_COLOR = {
     'S': '#e0473d', 'A': '#ef8f1e', 'B': '#f3cf3d', 'C': '#4fae59',
     'D': '#63b8de', 'E': '#2f6fb0', 'F': '#c92f86',
@@ -26,8 +28,8 @@ TIER_WORD = {
 # about.html exactly.
 def score_yc(v):
     if v >= 2.5: return 7
-    if v >= 2.1: return 6
-    if v >= 1.6: return 5
+    if v >= 2.3: return 6
+    if v >= 1.8: return 5
     if v >= 0.5: return 4
     if v >= 0: return 3
     if v >= -1: return 2
@@ -47,7 +49,7 @@ def score_pe(v):
 def score_ey(v):
     if v >= 9: return 7
     if v >= 7: return 6
-    if v >= 3.7: return 5
+    if v >= 4.1: return 5
     if v >= 2.1: return 4
     if v >= 1: return 3
     if v >= 0: return 2
@@ -59,5 +61,9 @@ def composite(yc, pe, ecy):
 
 
 def tier_for_score(s):
-    idx = max(0, min(6, round(s) - 1))
+    # Round half up (floor(s + 0.5)), matching JS Math.round() in index.html/about.html's
+    # nearestTier() exactly. Python's built-in round() uses round-half-to-even instead, which
+    # silently disagreed with the website at exact .5 composite scores (2.5, 4.5, etc.) --
+    # fixed 2026-10-02 so the daily email pipeline's tier never diverges from what the site shows.
+    idx = max(0, min(6, math.floor(s + 0.5) - 1))
     return ORDER[idx]

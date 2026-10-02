@@ -195,9 +195,9 @@
     function nearestTier(score){ return ORDER[Math.max(0,Math.min(6,Math.round(score)-1))]; }
     // Thresholds updated 2026-10-02 -- must match scoreYC/scorePE/scoreEY in index.html and
     // score_yc/score_pe/score_ey in scripts/scoring.py exactly.
-    function scoreYC(v){ return v>=2.5?7 : v>=2.1?6 : v>=1.6?5 : v>=0.5?4 : v>=0?3 : v>=-1?2 : 1; }
+    function scoreYC(v){ return v>=2.5?7 : v>=2.3?6 : v>=1.8?5 : v>=0.5?4 : v>=0?3 : v>=-1?2 : 1; }
     function scorePE(v){ return v<=10?7 : v<=16?6 : v<=22?5 : v<=28?4 : v<=34?3 : v<=40?2 : 1; }
-    function scoreEY(v){ return v>=9?7 : v>=7?6 : v>=3.7?5 : v>=2.1?4 : v>=1?3 : v>=0?2 : 1; }
+    function scoreEY(v){ return v>=9?7 : v>=7?6 : v>=4.1?5 : v>=2.1?4 : v>=1?3 : v>=0?2 : 1; }
     function composite(yc,pe,ecy){ return 0.25*scoreYC(yc) + 0.375*scorePE(pe) + 0.375*scoreEY(ecy); }
     function monthYearLabel(ym){
       const [y,mo] = ym.split('-');
