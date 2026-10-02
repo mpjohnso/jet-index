@@ -26,8 +26,8 @@ TIER_WORD = {
 # about.html exactly.
 def score_yc(v):
     if v >= 2.5: return 7
-    if v >= 2: return 6
-    if v >= 1: return 5
+    if v >= 2.1: return 6
+    if v >= 1.6: return 5
     if v >= 0.5: return 4
     if v >= 0: return 3
     if v >= -1: return 2
@@ -47,8 +47,8 @@ def score_pe(v):
 def score_ey(v):
     if v >= 9: return 7
     if v >= 7: return 6
-    if v >= 5: return 5
-    if v >= 3: return 4
+    if v >= 3.7: return 5
+    if v >= 2.1: return 4
     if v >= 1: return 3
     if v >= 0: return 2
     return 1

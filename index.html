@@ -525,9 +525,9 @@ document.getElementById('notifyForm').addEventListener('submit', function(e){
       statusEl.className = 'notify-status err';
     });
 });
-setChip('chipYC','D'); renderMeterContinuous('meterYC', continuousMetricScore(CURRENT_YC, [-1,0,0.5,1,2,2.5], false));
+setChip('chipYC','D'); renderMeterContinuous('meterYC', continuousMetricScore(CURRENT_YC, [-1,0,0.5,1.6,2.1,2.5], false));
 setChip('chipPE','F'); renderMeterContinuous('meterPE', continuousMetricScore(CURRENT_PE, [10,16,22,28,34,40], true));
-setChip('chipEY','D'); renderMeterContinuous('meterEY', continuousMetricScore(CURRENT_ECY, [0,1,3,5,7,9], false));
+setChip('chipEY','D'); renderMeterContinuous('meterEY', continuousMetricScore(CURRENT_ECY, [0,1,2.1,3.7,7,9], false));
 
 const TIER_DESC = {
   S:'Rare bargain conditions — the strongest historical forward returns.',
@@ -724,9 +724,9 @@ function drawHistoryChartInto(svg, plotId, xlabelId, points, labelSpecs, height,
 
 // ---- tier-scoring functions, matching the JET Index Legend exactly ----
 // Thresholds updated 2026-10-02 (see scripts/scoring.py for the matching Python copy).
-function scoreYC(v){ return v>=2.5?7 : v>=2?6 : v>=1?5 : v>=0.5?4 : v>=0?3 : v>=-1?2 : 1; }
+function scoreYC(v){ return v>=2.5?7 : v>=2.1?6 : v>=1.6?5 : v>=0.5?4 : v>=0?3 : v>=-1?2 : 1; }
 function scorePE(v){ return v<=10?7 : v<=16?6 : v<=22?5 : v<=28?4 : v<=34?3 : v<=40?2 : 1; }
-function scoreEY(v){ return v>=9?7 : v>=7?6 : v>=5?5 : v>=3?4 : v>=1?3 : v>=0?2 : 1; }
+function scoreEY(v){ return v>=9?7 : v>=7?6 : v>=3.7?5 : v>=2.1?4 : v>=1?3 : v>=0?2 : 1; }
 // Weighting: 25% yield curve / 37.5% Shiller PE / 37.5% Excess CAPE Yield.
 // Backtested against equal-weight and five other schemes across 1977-2026; this one improved
 // flagging of the 2022 bear market without raising false positives during the calm 2013-2019
