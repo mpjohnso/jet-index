@@ -93,7 +93,8 @@
   .meter{position:relative; margin-top:4px;}
   .meter-track{display:flex; height:9px; border-radius:5px; overflow:hidden;}
   .meter-track .seg{flex:1;}
-  .meter-scale{display:flex; justify-content:space-between; font-size:10px; color:var(--sub); margin-top:4px; font-weight:500;}
+  .meter-scale{display:flex; font-size:10px; color:var(--sub); margin-top:4px; font-weight:500;}
+  .meter-scale span{flex:1; text-align:center;}
   .credit-card{padding:14px 18px; margin-bottom:14px;}
   .credit-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;}
   .credit-label{font-size:13px; font-weight:600;}
@@ -420,7 +421,13 @@ function renderMeter(containerId, letter){
 // so it rarely lands precisely on a tier's midpoint.
 function renderMeterContinuous(containerId, score){
   const el = document.getElementById(containerId);
-  const pct = ((score-1)/6)*100;
+  // The track is 7 EQUAL-width color segments (tier k spans [(k-1)/7, k/7) of the width), not
+  // score 1-7 spread linearly over the full 0-100%. Using (score-1)/6 put a marker at a tier
+  // boundary (e.g. score 1.5, the F/E line) short of the segment's actual boundary (14.29%),
+  // so it visually sat inside the wrong-colored segment. (score-0.5)/7 matches the segments:
+  // a tier's own center (e.g. score 1 for F) lands at the same spot the old discrete meter
+  // used, and a tier boundary (score 1.5, 2.5, ...) lands exactly on the segment edge.
+  const pct = ((score-0.5)/7)*100;
   let segs = ORDER.map(l=>`<div class="seg" style="background:${TIER_COLOR[l]}"></div>`).join('');
   el.innerHTML = `<div class="meter-track">${segs}</div>
     <div class="meter-marker" style="left:${pct}%"></div>
