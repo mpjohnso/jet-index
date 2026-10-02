@@ -167,6 +167,16 @@
 
   .chart-card{padding:16px 14px 10px; margin-bottom:16px;}
   .chart-head{font-size:13.5px; font-weight:500; margin-bottom:2px;}
+  .chart-head-row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
+  .chart-head-row .chart-head{margin-bottom:0;}
+  .range-tabs{display:flex; gap:4px; flex:none;}
+  .range-tab{
+    font-family:'Oswald',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.01em;
+    padding:5px 9px; border-radius:7px; border:1px solid var(--line); background:#fff; color:var(--sub);
+    cursor:pointer; line-height:1;
+  }
+  .range-tab.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .range-tab:active{opacity:0.85;}
   .chart-sub{font-size:11.5px; color:var(--sub); margin-bottom:10px;}
   .chart-plot{width:100%; display:block; cursor:crosshair;}
   .chart-wrap{position:relative;}
@@ -329,9 +339,18 @@
     <div class="chart-sub" id="drivingReading" style="margin-bottom:0; font-size:13px; line-height:1.6; color:var(--ink);"></div>
   </div>
 
-  <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Last 36 months</div>
+  <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg><span id="recentSectionTitle">Last 3 years</span></div>
   <div class="card chart-card">
-    <div class="chart-head">Recent trend, monthly</div>
+    <div class="chart-head-row">
+      <div class="chart-head">Recent trend, monthly</div>
+      <div class="range-tabs" id="rangeTabs" role="tablist" aria-label="Chart time range">
+        <button class="range-tab" data-range="1y" type="button">1Y</button>
+        <button class="range-tab" data-range="3y" type="button">3Y</button>
+        <button class="range-tab" data-range="5y" type="button">5Y</button>
+        <button class="range-tab" data-range="10y" type="button">10Y</button>
+        <button class="range-tab" data-range="all" type="button">All</button>
+      </div>
+    </div>
     <div class="chart-wrap">
       <svg class="chart-plot" id="plotRecent" viewBox="0 0 560 260" preserveAspectRatio="none"></svg>
       <div class="chart-tooltip" id="plotRecent-tip"></div>
@@ -1007,12 +1026,57 @@ window.addEventListener('scroll', closeAllHeroDropdowns, true);
   });
 })();
 
-const recent36 = monthly.slice(-36);
-const recentPoints = recent36.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
-const recentYms = recent36.map(r=>r[0]);
-const recentLabelIdxs = [0,12,24,recentYms.length-1].filter((v,i,a)=>a.indexOf(v)===i);
-const recentLabelSpecs = recentLabelIdxs.map(idx=>({idx, text: monthYearLabelShort(recentYms[idx])}));
-drawHistoryChart('plotRecent','xRecent', recentPoints, recentLabelSpecs, 260, recentYms);
+// ---- "Last N" chart with a selectable time range ----
+// Each option's `months` is how many trailing months of `monthly` to show (null = everything).
+// The default ('3y') reproduces the chart's original fixed "last 36 months" view exactly.
+const RANGE_OPTIONS = {
+  '1y':  { months: 12,  title: 'Last 12 months' },
+  '3y':  { months: 36,  title: 'Last 3 years' },
+  '5y':  { months: 60,  title: 'Last 5 years' },
+  '10y': { months: 120, title: 'Last 10 years' },
+  'all': { months: null, title: `Full history (${monthly[0][0].slice(0,4)}–${monthly[monthly.length-1][0].slice(0,4)})` },
+};
+const DEFAULT_RANGE = '3y';
+
+// Spreads up to `maxLabels` x-axis labels evenly across `n` points (always including the
+// first and last), so the axis stays readable whether it's showing 12 points or 597.
+function pickLabelIdxs(n, maxLabels){
+  if(n <= maxLabels) return Array.from({length:n}, (_,i)=>i);
+  const idxs = [];
+  for(let i=0;i<maxLabels;i++) idxs.push(Math.round(i*(n-1)/(maxLabels-1)));
+  return [...new Set(idxs)];
+}
+
+function renderRecentChart(rangeKey){
+  const opt = RANGE_OPTIONS[rangeKey] || RANGE_OPTIONS[DEFAULT_RANGE];
+  const slice = opt.months ? monthly.slice(-opt.months) : monthly;
+  const points = slice.map(([ym,yc,pe,ecy,cr])=>({y:composite(yc,pe,ecy)}));
+  const yms = slice.map(r=>r[0]);
+
+  let labelSpecs;
+  if(rangeKey === 'all'){
+    // Decade-ish anchors (matches the full-history chart on the about page) read better than
+    // evenly-spaced month labels once the x-axis spans multiple decades.
+    const years = [1977,1990,2000,2010,2020];
+    labelSpecs = years.map(y=>({idx: findYearIdx(yms,y), text: String(y)}));
+    labelSpecs.push({idx: yms.length-1, text: yms[yms.length-1].slice(0,4)});
+  } else {
+    const idxs = pickLabelIdxs(yms.length, 4);
+    labelSpecs = idxs.map(idx=>({idx, text: monthYearLabelShort(yms[idx])}));
+  }
+
+  drawHistoryChart('plotRecent','xRecent', points, labelSpecs, 260, yms);
+  document.getElementById('recentSectionTitle').textContent = opt.title;
+  document.querySelectorAll('#rangeTabs .range-tab').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.range === rangeKey);
+  });
+}
+
+document.querySelectorAll('#rangeTabs .range-tab').forEach(btn=>{
+  btn.addEventListener('click', () => renderRecentChart(btn.dataset.range));
+});
+
+renderRecentChart(DEFAULT_RANGE);
 
 // ---- Credit-stress overlay ----
 // Not blended into the composite (backtesting showed the spread's *level* mostly dilutes the
