@@ -95,12 +95,6 @@
   .meter-track .seg{flex:1;}
   .meter-scale{display:flex; font-size:10px; color:var(--sub); margin-top:4px; font-weight:500;}
   .meter-scale span{flex:1; text-align:center;}
-  .credit-card{padding:14px 18px; margin-bottom:14px;}
-  .credit-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;}
-  .credit-label{font-size:13px; font-weight:600;}
-  .credit-dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; vertical-align:middle;}
-  .credit-desc{font-size:11.5px; color:var(--sub); line-height:1.45;}
-  .credit-strip{width:100%; display:block; margin-top:4px; border-radius:3px; overflow:hidden;}
   .momentum{font-size:11.5px; font-weight:600; margin:4px 0 8px; display:flex; align-items:center; gap:5px;}
   .momentum .arrow{font-size:13px; line-height:1;}
   .momentum .mag{font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:500; color:var(--sub);}
@@ -221,12 +215,6 @@
     .tier-legend-grid{display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(4,auto); grid-auto-flow:column; column-gap:22px;}
   }
 
-  .credit-legend{display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
-  .credit-legend-item{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink);}
-  .credit-legend-item b{font-weight:700;}
-  .credit-implication{font-size:12px; color:var(--sub); line-height:1.55; margin-top:10px;}
-  .credit-implication b{color:var(--ink); font-weight:600;}
-
   .note{margin-top:18px; padding:14px 16px; border:1px dashed var(--line); border-radius:12px; font-size:12.5px; color:var(--sub); line-height:1.55; background:var(--panel);}
   .note b{color:var(--ink); font-weight:600;}
   .timestamp{text-align:center; font-size:11px; color:var(--sub); margin-top:16px;}
@@ -291,16 +279,6 @@
     <div class="tier-legend-title">Tier guide</div>
     <div class="tier-strip" id="tierStrip"></div>
     <div class="tier-legend-grid" id="tierLegendGrid"></div>
-  </div>
-
-  <div class="card credit-card">
-    <div class="credit-row">
-      <span class="credit-label">Credit conditions</span>
-      <span class="mono" id="creditStatusText"></span>
-    </div>
-    <div class="credit-desc">A separate signal, not part of the score above: whether corporate credit spreads are widening fast enough to suggest genuine financial-system stress, rather than just an expensive market. Based on the Baa&ndash;10Y spread's 6-month change.</div>
-    <div class="credit-legend" id="creditLegend"></div>
-    <div class="credit-implication"><b>How to read it:</b> this is a warning light, not a vote in the composite score above. The three inputs measure how expensive markets are; credit conditions measure whether the financial system itself is under strain. Valuation can look calm while credit quietly deteriorates &mdash; as it did heading into 2008 &mdash; so when this flag moves to Watch or Elevated, it's worth weighing more heavily than the tier reading alone.</div>
   </div>
 
   <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>The three inputs</div>
@@ -1174,40 +1152,6 @@ document.querySelectorAll('#rangeTabs .range-tab').forEach(btn=>{
 
 renderRecentChart(DEFAULT_RANGE);
 
-// ---- Credit-stress overlay ----
-// Not blended into the composite (backtesting showed the spread's *level* mostly dilutes the
-// valuation signal without adding real warning power -- valuations look "cheap" exactly as a
-// credit crisis crashes prices, which is correct for the composite's purpose but useless as a
-// crisis flag). Its 6-month RATE OF CHANGE is a different, genuinely useful signal: it caught
-// the 2007-08 credit crisis one month after the market's top (widening +0.61pp by Nov 2007,
-// 16 months before the eventual bottom), stayed quiet through 1987 (a liquidity event, not a
-// credit one), and showed only a mild +0.50pp wobble in 2022 versus 1.2pp+ during real crises --
-// so this overlay is shown as a separate flag, not folded into the tier average.
-function widen6mo(idx){
-  if(idx < 6) return null;
-  return monthly[idx][4] - monthly[idx-6][4];
-}
-function creditStatus(widening){
-  if(widening === null) return {level:'calm', label:'Calm', detail:'not enough history'};
-  if(widening >= 1.0) return {level:'red', label:'Elevated \u2014 crisis-scale widening', detail:`+${widening.toFixed(2)}pp over 6 months`};
-  if(widening >= 0.5) return {level:'amber', label:'Watch \u2014 spread widening', detail:`+${widening.toFixed(2)}pp over 6 months`};
-  return {level:'calm', label:'Calm', detail:`${widening>=0?'+':''}${widening.toFixed(2)}pp over 6 months`};
-}
-const CREDIT_DOT = {calm:'#4fae59', amber:'#ef8f1e', red:'#c92f86'};
-const CREDIT_LEVELS = [
-  {level:'calm', label:'Calm', range:'under +0.50pp'},
-  {level:'amber', label:'Watch', range:'+0.50 to +0.99pp'},
-  {level:'red', label:'Elevated', range:'+1.00pp or more'}
-];
-document.getElementById('creditLegend').innerHTML = CREDIT_LEVELS.map(c=>
-  `<div class="credit-legend-item"><span class="credit-dot" style="background:${CREDIT_DOT[c.level]}"></span><b>${c.label}</b> &middot; ${c.range}</div>`
-).join('');
-
-const currentWidening = widen6mo(monthly.length-1);
-const currentCredit = creditStatus(currentWidening);
-const cw = document.getElementById('creditStatusText');
-cw.innerHTML = `<span class="credit-dot" style="background:${CREDIT_DOT[currentCredit.level]}"></span>${currentCredit.label} &middot; ${currentCredit.detail}`;
-
 // ---- Momentum indicators: direction and magnitude of the last 3 months' movement ----
 // Compares the current month's raw reading to the reading 3 months ago for each input, plus
 // the composite score itself. "Favorable" direction depends on the metric: higher is better
@@ -1535,10 +1479,6 @@ function periodCardHTML(row, idx){
     return `<div class="period-row"><span class="lbl">${lbl}</span><span class="val">${val}${unit} (${t})</span></div>`;
   };
   const [sYC,sPE,sECY] = scoresFor(row);
-  const widening = widen6mo(idx);
-  const cStatus = creditStatus(widening);
-  const creditRow = `<div class="period-row"><span class="lbl">Credit spread (Baa&ndash;10Y)</span><span class="val">${row[4].toFixed(2)}%</span></div>
-    <div class="period-row"><span class="lbl">Credit stress</span><span class="val"><span class="credit-dot" style="background:${CREDIT_DOT[cStatus.level]}"></span>${cStatus.label}</span></div>`;
   return `
     <div class="period-head">
       <span class="period-chip" style="background:${TIER_COLOR[compTier]};color:${TIER_TEXT[compTier]}">${compTier}</span>
@@ -1547,7 +1487,6 @@ function periodCardHTML(row, idx){
     ${metricRow('Yield curve', row[1].toFixed(2), '%', sYC)}
     ${metricRow('Shiller PE', row[2].toFixed(1), '', sPE)}
     ${metricRow('Excess CAPE Yield', row[3].toFixed(2), '%', sECY)}
-    ${creditRow}
     <div class="period-row"><span class="lbl">Composite</span><span class="val">${comp.toFixed(2)} / 7</span></div>
     <div class="period-row"><span class="lbl">S&amp;P, 12mo after</span>${forwardReturnHTML(row[0],12)}</div>
     <div class="period-row" style="border-bottom:none;"><span class="lbl">S&amp;P, 24mo after</span>${forwardReturnHTML(row[0],24)}</div>
@@ -1562,16 +1501,6 @@ function metricCompareSentence(label, row1, row2, idx, unit, fmt){
   if(t1 === t2) return `${label} was similarly ${TIER_WORD[t1]} in both periods (${v1}${unit} vs ${v2}${unit}).`;
   return `${label} was ${TIER_WORD[t1]} in Period A (${v1}${unit}) versus ${TIER_WORD[t2]} in Period B (${v2}${unit}).`;
 }
-function creditCompareSentence(rowA, idxA, rowB, idxB){
-  const stA = creditStatus(widen6mo(idxA)), stB = creditStatus(widen6mo(idxB));
-  const vA = rowA[4].toFixed(2), vB = rowB[4].toFixed(2);
-  if(stA.level === stB.level){
-    return `Credit conditions were similarly ${stA.level === 'calm' ? 'calm' : stA.level === 'amber' ? 'showing some strain' : 'under real stress'} in both periods (Baa&ndash;10Y spread ${vA}% vs ${vB}%).`;
-  }
-  const describe = lvl => lvl === 'calm' ? 'calm' : lvl === 'amber' ? 'already widening' : 'in genuine crisis-level stress';
-  return `Credit conditions differed: Period A was ${describe(stA.level)} (spread ${vA}%), while Period B was ${describe(stB.level)} (spread ${vB}%) \u2014 a real difference the three core tiers alone wouldn't show.`;
-}
-
 function copyShareLink(query, btn){
   const url = `${location.origin}${location.pathname}?${query}`;
   const restore = () => setTimeout(()=>{ btn.textContent = btn.dataset.label; }, 1800);
@@ -1611,7 +1540,6 @@ function runCompare(){
     metricCompareSentence('The yield curve', rowA, rowB, 0, 'pp', v=>v.toFixed(2)),
     metricCompareSentence('The Shiller PE', rowA, rowB, 1, '', v=>v.toFixed(1)),
     metricCompareSentence('The Excess CAPE Yield', rowA, rowB, 2, 'pp', v=>v.toFixed(2)),
-    creditCompareSentence(rowA, monthlyIndex.get(ymA), rowB, monthlyIndex.get(ymB)),
   ];
   const eraA = getEra(ymA), eraB = getEra(ymB);
   let eraSentence = '';
@@ -1640,17 +1568,12 @@ function runCompare(){
 document.getElementById('compareBtn').addEventListener('click', runCompare);
 
 // Explains why the 3 matched periods' forward returns did (or didn't) diverge, using the
-// credit-stress status and era context at each match -- the two things the numeric tier
-// scores themselves can't distinguish between.
+// era context at each match -- something the numeric tier scores themselves can't capture.
 function buildDivergenceExplanation(picked, targetRow){
   const rows = picked.map(p => monthly[p.i]);
   const fwd12 = picked.map(p => forwardReturn(monthly[p.i][0], 12));
   const known = fwd12.filter(v => v !== null);
-  const creditWords = picked.map(p => creditStatus(widen6mo(p.i)).level);
   const eras = rows.map(r => getEra(r[0]));
-  const describe = lvl => lvl === 'calm' ? 'credit conditions were calm'
-                        : lvl === 'amber' ? 'credit spreads were already widening'
-                        : 'credit markets were under real, crisis-level stress';
 
   if(known.length < 2){
     return `Not enough of these matches have completed their forward window yet to compare outcomes.`;
@@ -1661,19 +1584,19 @@ function buildDivergenceExplanation(picked, targetRow){
     const f = fwd12[i];
     const fTxt = f === null ? 'outcome not yet known' : `${f>=0?'+':''}${f.toFixed(0)}% over the next year`;
     const eraTxt = eras[i] ? eras[i] : 'no major flagged event';
-    return `<b>${formatMonthLabel(r[0])}</b> (${fTxt}) fell during ${eraTxt}, and ${describe(creditWords[i])}`;
+    return `<b>${formatMonthLabel(r[0])}</b> (${fTxt}) fell during ${eraTxt}`;
   });
 
   if(range > 15){
-    return `The three matches score alike on the tracked valuation and yield-curve tiers, but their forward outcomes ranged from ${Math.min(...known).toFixed(0)}% to +${Math.max(...known).toFixed(0)}% over the following year \u2014 a real spread, not noise. The likely explanation is exactly what the three core tiers don't capture: ${clauses.join('; ')}. In short, similar valuations produced different results because the credit backdrop and the specific macro story underneath each period were different \u2014 which is the whole reason the credit overlay exists as a separate signal rather than being folded into the score.`;
+    return `The three matches score alike on the tracked valuation and yield-curve tiers, but their forward outcomes ranged from ${Math.min(...known).toFixed(0)}% to +${Math.max(...known).toFixed(0)}% over the following year \u2014 a real spread, not noise. The likely explanation is exactly what the three core tiers don't capture: the specific macro story underneath each period. ${clauses.join('; ')}.`;
   } else {
-    return `Forward outcomes were broadly similar across all three matches (within about ${range.toFixed(0)} percentage points of each other), and that lines up with the underlying conditions, not just the tiers: ${clauses.join('; ')}. When both the tracked metrics and credit conditions agree across analogous periods, the forward results tend to agree too \u2014 though three data points is still a small sample to lean on.`;
+    return `Forward outcomes were broadly similar across all three matches (within about ${range.toFixed(0)} percentage points of each other): ${clauses.join('; ')} \u2014 though three data points is still a small sample to lean on.`;
   }
 }
 
-// Compact side-by-side table: Today plus the 3 matched analogs, all three tiers, the
-// composite, and the credit spread -- for scanning the whole comparison at a glance
-// before reading the individual cards below.
+// Compact side-by-side table: Today plus the 3 matched analogs, all three tiers, and the
+// composite -- for scanning the whole comparison at a glance before reading the
+// individual cards below.
 function buildSummaryTable(targetRow, targetIdx, picked){
   const cols = [
     {label:'Today', row:targetRow, idx:targetIdx},
@@ -1687,10 +1610,6 @@ function buildSummaryTable(targetRow, targetIdx, picked){
     ['Shiller PE',  c => tierCell(ORDER[scorePE(c.row[2])-1], c.row[2].toFixed(1))],
     ['Excess CAPE Yield', c => tierCell(ORDER[scoreEY(c.row[3])-1], c.row[3].toFixed(2)+'%')],
     ['Composite', c => tierCell(tierLetterForScore(compositeForRow(c.row)), compositeForRow(c.row).toFixed(2))],
-    ['Credit spread', c => {
-        const st = creditStatus(widen6mo(c.idx));
-        return `<span class="credit-dot" style="background:${CREDIT_DOT[st.level]}"></span>${c.row[4].toFixed(2)}%`;
-      }],
   ];
 
   const headerCells = cols.map(c => `<th>${c.label}</th>`).join('');
@@ -1760,7 +1679,6 @@ function runSimilar(){
       [sYC,sPE,sECY].map((s,k)=>SIM_WEIGHTS[k]*Math.abs(s-targetVec[k]))
         .reduce((best,val,idx,arr)=> val<arr[best]?idx:best, 0)
     ];
-    const cStatus = creditStatus(widen6mo(p.i));
     return `
       <div class="similar-item">
         <div class="similar-rank">${rank+1}</div>
@@ -1774,7 +1692,6 @@ function runSimilar(){
             Composite ${comp.toFixed(2)}/7, closest match on ${closestLabel}.
             ${era ? era + '.' : ''}
           </div>
-          <div class="period-row"><span class="lbl">Credit spread (Baa&ndash;10Y)</span><span class="val">${row[4].toFixed(2)}% &middot; <span class="credit-dot" style="background:${CREDIT_DOT[cStatus.level]}"></span>${cStatus.label}</span></div>
           <div class="period-row"><span class="lbl">S&amp;P, 12mo after</span>${forwardReturnHTML(row[0],12)}</div>
           <div class="period-row" style="border-bottom:none;"><span class="lbl">S&amp;P, 24mo after</span>${forwardReturnHTML(row[0],24)}</div>
         </div>

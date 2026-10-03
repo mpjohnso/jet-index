@@ -75,7 +75,6 @@
   }
   .xlabels{position:relative; height:13px; font-size:10px; color:var(--sub); margin-top:4px;}
   .xlabels span{position:absolute; top:0; white-space:nowrap;}
-  .credit-strip{width:100%; display:block; margin-top:4px; border-radius:3px; overflow:hidden;}
   .peak-legend{font-size:11px; color:var(--sub); line-height:1.6; margin-top:8px;}
   .peak-swatch{display:inline-block; width:12px; height:0; border-top:1.5px dashed #c0392b; margin-right:6px; vertical-align:middle;}
   .chart-status{font-size:12.5px; color:var(--sub); text-align:center; padding:20px 0;}
@@ -131,8 +130,6 @@
         <div class="chart-tooltip" id="plotLong-tip"></div>
       </div>
       <div class="xlabels" id="xLong"></div>
-      <svg class="credit-strip" id="creditStrip" viewBox="0 0 560 14" preserveAspectRatio="none"></svg>
-      <div class="chart-sub" style="margin-top:4px;">Amber/red marks below the chart: months where corporate credit spreads widened fast enough to suggest genuine financial-system stress.</div>
       <div class="peak-legend" id="peakLegend"></div>
     </div>
 
@@ -144,7 +141,7 @@
       <li><b>Market cap-to-GDP ("Buffett Indicator")</b> &mdash; doesn't hold up well across decades because it ignores that public companies now earn a much larger share of revenue overseas than GDP captures, and that the share of the economy held in public markets has structurally grown over time. Both distort the ratio in ways that have nothing to do with valuation.</li>
       <li><b>Dividend yield alone</b> &mdash; has trended structurally lower since the 1980s mainly because companies shifted toward buybacks instead of dividends as a matter of tax and capital-allocation preference, not because stocks got more expensive. That makes it unreliable to compare across eras.</li>
       <li><b>Volatility or sentiment measures</b> (the VIX, put/call ratios, bullish/bearish surveys) &mdash; these measure near-term fear and positioning, which mean-reverts over weeks, not years. They're built for short-term timing, which runs counter to this index's purpose (see "What it shouldn't do," below).</li>
-      <li><b>Credit spreads</b> &mdash; genuinely useful, and already shown on this site as a separate overlay. But a corporate credit spread measures financial-system stress, not equity valuation. Folding it into the same composite score as the other three would blend two different questions &mdash; "are stocks cheap?" and "is the credit system under strain?" &mdash; into one number, making both harder to read.</li>
+      <li><b>Credit spreads</b> &mdash; a corporate credit spread measures financial-system stress, not equity valuation, so it was tested here as a separate overlay rather than folded into the composite. Several versions were backtested &mdash; the Baa&ndash;10Y spread's level and its rate of change, the TED spread, and the Fed's own excess-bond-premium model &mdash; and none of them reduced the false-signal rate of the tiers above, including versions built specifically to avoid reading "calm" partway through an ongoing credit crisis. Credit stress turns out to be too often elevated without a correction following to usefully separate real danger from noise, so it isn't shown on this site at all.</li>
     </ul>
 
     <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>Why fixed thresholds, not percentiles</h2>
@@ -214,14 +211,6 @@
       });
       return best;
     }
-    function widen6mo(i){ return i < 6 ? null : monthly[i][4] - monthly[i-6][4]; }
-    function creditStatus(w){
-      if(w === null) return {level:'calm'};
-      if(w >= 1.0) return {level:'red'};
-      if(w >= 0.5) return {level:'amber'};
-      return {level:'calm'};
-    }
-    const CREDIT_DOT = {calm:'#4fae59', amber:'#ef8f1e', red:'#c92f86'};
     const MARKET_PEAKS = [
       {ym:'1987-08', label:'Aug 1987 — peak before Black Monday'},
       {ym:'2000-03', label:'Mar 2000 — dot-com peak'},
@@ -361,24 +350,6 @@
       '<span class="peak-swatch"></span>Dashed red lines mark market peaks that came just before a major downturn: '
       + MARKET_PEAKS.map(p=>p.label).join(' &middot; ');
 
-    (function drawCreditStrip(){
-      const svg = document.getElementById('creditStrip');
-      const W = 560, H = 14;
-      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      const n = monthly.length;
-      const padL = 26, padR = 4;
-      const plotW = W - padL - padR;
-      for(let i=0;i<n;i++){
-        const st = creditStatus(widen6mo(i));
-        if(st.level === 'calm') continue;
-        const x = padL + (i/(n-1))*plotW;
-        const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-        rect.setAttribute('x', x); rect.setAttribute('y', 0);
-        rect.setAttribute('width', Math.max(1.2, plotW/n)); rect.setAttribute('height', H);
-        rect.setAttribute('fill', CREDIT_DOT[st.level]);
-        svg.appendChild(rect);
-      }
-    })();
 
     statusEl.style.display = 'none';
     blockEl.style.display = 'block';
