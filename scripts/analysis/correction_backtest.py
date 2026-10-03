@@ -107,6 +107,93 @@ def run_length_episodes(tier_seq):
     return episodes
 
 
+def find_drawdown_episodes(prices, yms, threshold=0.10):
+    """Peak-to-trough-to-recovery cycles in a price series, independent of
+    any tier/metric -- this is about the market's own history of drawdowns
+    and how long each took to recover, not about what the index said at the
+    time. A new episode opens the first time price falls >=threshold from
+    the running all-time-high since the last recovery, and closes the first
+    month price closes back at/above the peak it fell from. The last
+    episode may be unresolved (recovery_idx=None) if the data ends mid-drop.
+    """
+    n = len(prices)
+    episodes = []
+    peak_val = prices[0]
+    peak_idx = 0
+    cur = None
+    for i in range(1, n):
+        if cur is None:
+            if prices[i] > peak_val:
+                peak_val = prices[i]
+                peak_idx = i
+            else:
+                dd = (peak_val - prices[i]) / peak_val
+                if dd >= threshold:
+                    cur = {'peak_idx': peak_idx, 'peak_val': peak_val,
+                           'trough_idx': i, 'trough_val': prices[i]}
+        else:
+            if prices[i] < cur['trough_val']:
+                cur['trough_val'] = prices[i]
+                cur['trough_idx'] = i
+            if prices[i] >= cur['peak_val']:
+                cur['recovery_idx'] = i
+                episodes.append(cur)
+                peak_val = prices[i]
+                peak_idx = i
+                cur = None
+    if cur is not None:
+        cur['recovery_idx'] = None
+        episodes.append(cur)
+    for e in episodes:
+        e['max_drawdown'] = (e['peak_val'] - e['trough_val']) / e['peak_val']
+        e['peak_ym'] = yms[e['peak_idx']]
+        e['trough_ym'] = yms[e['trough_idx']]
+        e['recovery_ym'] = yms[e['recovery_idx']] if e['recovery_idx'] is not None else None
+        e['months_peak_to_trough'] = e['trough_idx'] - e['peak_idx']
+        e['months_trough_to_recovery'] = (
+            (e['recovery_idx'] - e['trough_idx']) if e['recovery_idx'] is not None else None)
+        e['months_peak_to_recovery'] = (
+            (e['recovery_idx'] - e['peak_idx']) if e['recovery_idx'] is not None else None)
+    return episodes
+
+
+def recovery_time_by_severity(buckets=((0.10, 0.20, '10-20%'), (0.20, 0.30, '20-30%'), (0.30, 1.0, '30%+'))):
+    """For each severity bucket, how long (on average) did it take the
+    market to get back to its old high, for drawdown episodes that actually
+    reached that severity. This is about the market's own cycle history --
+    not conditioned on any JET Index tier."""
+    rows, sp500 = load_monthly_and_sp500()
+    yms = [r[0] for r in rows]
+    prices = [sp500.get(ym) for ym in yms]
+    valid_idx = [i for i, p in enumerate(prices) if p is not None]
+    price_list = [prices[i] for i in valid_idx]
+    valid_yms = [yms[i] for i in valid_idx]
+
+    episodes = find_drawdown_episodes(price_list, valid_yms)
+
+    print("=== Drawdown episodes (>=10% from a running high), 1977-present ===")
+    for e in episodes:
+        rec = e['months_peak_to_recovery']
+        rec_str = f"{rec}mo" if rec is not None else "ONGOING / not yet recovered"
+        print(f"  peak {e['peak_ym']} -> trough {e['trough_ym']} (-{e['max_drawdown']*100:.1f}%)"
+              f" -> recovery {e['recovery_ym'] or '?'}  [{rec_str}]")
+
+    print(f"\n{'Severity':<10}{'n':>4}{'avg peak->trough':>18}{'avg trough->recov':>20}"
+          f"{'avg peak->recovery':>20}{'n_unresolved':>14}")
+    for lo, hi, label in buckets:
+        group = [e for e in episodes if lo <= e['max_drawdown'] < hi]
+        resolved = [e for e in group if e['recovery_idx'] is not None]
+        n_unresolved = len(group) - len(resolved)
+        if resolved:
+            pt = mean(e['months_peak_to_trough'] for e in resolved)
+            tr = mean(e['months_trough_to_recovery'] for e in resolved)
+            pr = mean(e['months_peak_to_recovery'] for e in resolved)
+            print(f"{label:<10}{len(group):>4}{pt:>18.1f}{tr:>20.1f}{pr:>20.1f}{n_unresolved:>14}")
+        else:
+            print(f"{label:<10}{len(group):>4}{'n/a':>18}{'n/a':>20}{'n/a':>20}{n_unresolved:>14}")
+    return episodes
+
+
 def summarize_tier_group(indices, correction_months, is_censored, window=FALSE_SIGNAL_WINDOW):
     """indices: month indices in this tier group.
     correction_months[i] / is_censored[i] indexed by month index i."""
@@ -246,5 +333,7 @@ def main():
 if __name__ == "__main__":
     if "--matrix" in sys.argv:
         composite_sensitivity_matrix()
+    elif "--recovery" in sys.argv:
+        recovery_time_by_severity()
     else:
         main()
