@@ -1699,13 +1699,32 @@ function runSimilar(){
   const EXCLUDE_RECENT = 24; // months -- too close to "now" to count as a distinct historical echo
   const MIN_GAP = 12; // months required between any two picked matches
 
+  // Per-metric tier frequency, used only to break distance ties below: when two candidate
+  // months are equally close to today overall, prefer the one that matches today exactly on
+  // whichever metric is currently sitting in the RARER tier. An exact match on today's F-tier
+  // Shiller PE (~1% of months) is more distinctive than an exact match on a common D-tier
+  // yield curve (~25% of months), even though both contribute the same amount to the raw
+  // distance. Without this, ties were broken purely by chronological order -- the first
+  // candidate encountered could win over an equally-close (or exact) match on the metric
+  // that's actually unusual about today, and then the 12-month spacing rule below would lock
+  // out that better match entirely. Fixed 2026-10-02.
+  const metricFreq = [{}, {}, {}]; // [yc, pe, ey] -> {tierScore: count of months with that score}
+  monthly.forEach(row => {
+    scoresFor(row).forEach((s, k) => { metricFreq[k][s] = (metricFreq[k][s] || 0) + 1; });
+  });
+  function rarityScore(v){
+    return v.reduce((sum, s, k) => sum + (s === targetVec[k] ? monthly.length / metricFreq[k][s] : 0), 0);
+  }
+
   const candidates = [];
   for(let i=0; i<monthly.length - EXCLUDE_RECENT; i++){
     const v = scoresFor(monthly[i]);
     const d = Math.sqrt(v.reduce((sum,x,k)=>sum+(x-targetVec[k])**2, 0));
-    candidates.push({i, d});
+    candidates.push({i, d, rarity: rarityScore(v)});
   }
-  candidates.sort((a,b)=>a.d-b.d);
+  // Closest overall match first; on an exact tie, prefer the candidate matching today's
+  // rarer tier (see rarityScore above) over one matching today's more common tier.
+  candidates.sort((a,b)=> a.d - b.d || b.rarity - a.rarity);
 
   const picked = [];
   for(const c of candidates){
