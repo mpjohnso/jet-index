@@ -49,7 +49,7 @@
   @media (max-width:480px){
     /* Below this, "JOHNSON ECONOMIC TIER" needs the full row to wrap by word (not mid-word) --
        drop the about-link to its own row underneath rather than letting it squeeze the title. */
-    .about-link{flex-basis:100%; margin-left:78px; width:fit-content;}
+    .about-link{flex-basis:100%; margin-left:78px; width:fit-content; max-width:calc(100% - 78px); box-sizing:border-box; white-space:normal; text-align:center;}
   }
 
   .card{background:var(--panel); border:1px solid var(--line); border-radius:12px;}
