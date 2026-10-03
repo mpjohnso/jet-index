@@ -125,7 +125,7 @@ def summarize_tier_group(indices, correction_months, is_censored, window=FALSE_S
     }
 
 
-def build_correction_fields(sp500_prices_by_ym, rows):
+def build_correction_fields(sp500_prices_by_ym, rows, threshold=CORRECTION_THRESHOLD, window=FALSE_SIGNAL_WINDOW):
     """Returns parallel arrays: correction_months[i], is_censored[i] for each
     row in `rows`, using the SP500 series aligned by year-month."""
     yms = [r[0] for r in rows]
@@ -146,15 +146,47 @@ def build_correction_fields(sp500_prices_by_ym, rows):
 
     max_month_in_data = n - 1
     for local_i, global_i in enumerate(valid_idx):
-        c = months_to_correction(price_list, local_i)
+        c = months_to_correction(price_list, local_i, threshold=threshold)
         correction_months[global_i] = c
         if c is not None:
             is_censored[global_i] = False
         else:
             # censored only if there isn't enough runway left to be sure
-            is_censored[global_i] = (max_month_in_data - local_i) < FALSE_SIGNAL_WINDOW
+            is_censored[global_i] = (max_month_in_data - local_i) < window
 
     return correction_months, is_censored
+
+
+def composite_sensitivity_matrix(thresholds=(0.10, 0.20, 0.30), windows=(12, 24)):
+    """Re-run the composite-tier table across a grid of correction
+    thresholds (e.g. 10/20/30% drawdowns) and false-signal windows
+    (e.g. 12/24 months). Returns nothing -- prints a table per combo,
+    same shape as the single-threshold tables in main()."""
+    rows, sp500 = load_monthly_and_sp500()
+    composite_tier = []
+    for (ym, yc, pe, ecy) in rows:
+        comp = composite(yc, pe, ecy)
+        composite_tier.append(tier_for_score(comp))
+    groups = {}
+    for i, t in enumerate(composite_tier):
+        groups.setdefault(t, []).append(i)
+
+    for threshold in thresholds:
+        for window in windows:
+            cm, cens = build_correction_fields(sp500, rows, threshold=threshold, window=window)
+            print(f"=== COMPOSITE tier -- {int(threshold*100)}% correction, {window}mo false-signal window ===")
+            print(f"{'Tier':<6}{'n_months':>10}{'n_usable':>10}{'avg_mo_to_corr':>16}{'false_signal_%':>16}")
+            for t in ORDER:
+                if t not in groups:
+                    continue
+                stats = summarize_tier_group(groups[t], cm, cens, window=window)
+                if stats is None:
+                    continue
+                avg_str = (f"{stats['avg_months_to_correction']:.1f}"
+                           if stats['avg_months_to_correction'] is not None else "n/a")
+                print(f"{t:<6}{stats['n_months']:>10}{stats['n_usable']:>10}{avg_str:>16}"
+                      f"{stats['false_signal_pct']:>15.1f}%")
+            print()
 
 
 def main():
@@ -212,4 +244,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if "--matrix" in sys.argv:
+        composite_sensitivity_matrix()
+    else:
+        main()
