@@ -194,6 +194,66 @@ def recovery_time_by_severity(buckets=((0.10, 0.20, '10-20%'), (0.20, 0.30, '20-
     return episodes
 
 
+def bull_market_runway_by_tier():
+    """Flip side of the correction analysis: instead of "how soon until a
+    correction," this asks "how much further does the rally have to run
+    before it tops out and a correction begins." For each month, find the
+    next market peak (per find_drawdown_episodes) and measure the distance
+    to it in months; a month inside an ongoing drawdown/recovery counts
+    toward the NEXT future peak, not the one it just fell from. Grouped by
+    composite tier, both at the raw month level and at the episode-start
+    (de-autocorrelated) level, since consecutive months in the same tier
+    give near-duplicate runway values that would otherwise dominate the
+    average."""
+    rows, sp500 = load_monthly_and_sp500()
+    yms = [r[0] for r in rows]
+    prices = [sp500.get(ym) for ym in yms]
+    valid_idx = [i for i, p in enumerate(prices) if p is not None]
+    price_list = [prices[i] for i in valid_idx]
+    valid_yms = [yms[i] for i in valid_idx]
+
+    episodes = find_drawdown_episodes(price_list, valid_yms)
+    peak_idxs_global = sorted(valid_idx[e['peak_idx']] for e in episodes)
+
+    runway = [None] * len(rows)
+    censored = [True] * len(rows)
+    for i in valid_idx:
+        future_peaks = [p for p in peak_idxs_global if p >= i]
+        if future_peaks:
+            runway[i] = min(future_peaks) - i
+            censored[i] = False
+
+    composite_tier = []
+    for (ym, yc, pe, ecy) in rows:
+        comp = composite(yc, pe, ecy)
+        composite_tier.append(tier_for_score(comp))
+
+    def report(groups, label):
+        print(f"--- {label} ---")
+        print(f"{'Tier':<6}{'n':>8}{'n_usable':>10}{'avg_runway_to_next_peak(mo)':>30}")
+        for t in ORDER:
+            if t not in groups:
+                continue
+            idxs = groups[t]
+            usable = [i for i in idxs if not censored[i]]
+            if not usable:
+                print(f"{t:<6}{len(idxs):>8}{0:>10}{'n/a':>30}")
+                continue
+            avg = mean(runway[i] for i in usable)
+            print(f"{t:<6}{len(idxs):>8}{len(usable):>10}{avg:>30.1f}")
+        print()
+
+    month_groups = {}
+    for i, t in enumerate(composite_tier):
+        month_groups.setdefault(t, []).append(i)
+    report(month_groups, "by raw month")
+
+    episode_groups = {}
+    for (s, t, _l) in run_length_episodes(composite_tier):
+        episode_groups.setdefault(t, []).append(s)
+    report(episode_groups, "by episode-start (de-autocorrelated)")
+
+
 def summarize_tier_group(indices, correction_months, is_censored, window=FALSE_SIGNAL_WINDOW):
     """indices: month indices in this tier group.
     correction_months[i] / is_censored[i] indexed by month index i."""
@@ -335,5 +395,7 @@ if __name__ == "__main__":
         composite_sensitivity_matrix()
     elif "--recovery" in sys.argv:
         recovery_time_by_severity()
+    elif "--runway" in sys.argv:
+        bull_market_runway_by_tier()
     else:
         main()
