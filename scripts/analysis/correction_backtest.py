@@ -254,6 +254,74 @@ def bull_market_runway_by_tier():
     report(episode_groups, "by episode-start (de-autocorrelated)")
 
 
+def risk_vs_opportunity_framing():
+    """Split framing requested 2026-10-03: for the 'danger' tiers (F/E/D),
+    report downside risk (months to a correction, false-signal %) -- same
+    as main(). For the 'safe' tiers (C/B/A), report upside instead: % price
+    gain to the next market peak, and how many months that takes. Both use
+    the episode-start (de-autocorrelated) view since consecutive months in
+    one tier stretch give near-duplicate values that would otherwise
+    dominate a raw-month average."""
+    rows, sp500 = load_monthly_and_sp500()
+    yms = [r[0] for r in rows]
+    prices = [sp500.get(ym) for ym in yms]
+    valid_idx = [i for i, p in enumerate(prices) if p is not None]
+    price_list = [prices[i] for i in valid_idx]
+    valid_yms = [yms[i] for i in valid_idx]
+
+    episodes = find_drawdown_episodes(price_list, valid_yms)
+    peak_idxs_global = sorted(valid_idx[e['peak_idx']] for e in episodes)
+    peak_price_by_global = {valid_idx[e['peak_idx']]: e['peak_val'] for e in episodes}
+    price_by_global = {valid_idx[i]: price_list[i] for i in range(len(valid_idx))}
+
+    upside_pct = [None] * len(rows)
+    runway = [None] * len(rows)
+    up_censored = [True] * len(rows)
+    for i in valid_idx:
+        future_peaks = [p for p in peak_idxs_global if p > i]
+        if future_peaks:
+            np_ = min(future_peaks)
+            runway[i] = np_ - i
+            upside_pct[i] = (peak_price_by_global[np_] / price_by_global[i] - 1) * 100
+            up_censored[i] = False
+
+    composite_tier = []
+    for (ym, yc, pe, ecy) in rows:
+        comp = composite(yc, pe, ecy)
+        composite_tier.append(tier_for_score(comp))
+
+    cm, cens = build_correction_fields(sp500, rows)
+    tier_episodes = run_length_episodes(composite_tier)
+    groups = {}
+    for (s, t, _l) in tier_episodes:
+        groups.setdefault(t, []).append(s)
+
+    print("=== Danger tiers (F/E/D): downside risk, episode-start ===")
+    print(f"{'Tier':<6}{'n_ep':>6}{'n_usable':>10}{'avg_mo_to_corr':>16}{'false_signal_%':>16}")
+    for t in ['F', 'E', 'D']:
+        if t not in groups:
+            continue
+        idxs = groups[t]
+        s = summarize_tier_group(idxs, cm, cens)
+        if s is None:
+            continue
+        avg = f"{s['avg_months_to_correction']:.1f}" if s['avg_months_to_correction'] is not None else "n/a"
+        print(f"{t:<6}{len(idxs):>6}{s['n_usable']:>10}{avg:>16}{s['false_signal_pct']:>15.1f}%")
+
+    print("\n=== Safe tiers (C/B/A): upside potential, episode-start ===")
+    print(f"{'Tier':<6}{'n_ep':>6}{'n_usable':>10}{'avg_upside_%':>14}{'avg_mo_to_peak':>16}")
+    for t in ['C', 'B', 'A']:
+        if t not in groups:
+            continue
+        idxs = groups[t]
+        usable = [i for i in idxs if not up_censored[i]]
+        if not usable:
+            continue
+        avg_up = mean(upside_pct[i] for i in usable)
+        avg_mo = mean(runway[i] for i in usable)
+        print(f"{t:<6}{len(idxs):>6}{len(usable):>10}{avg_up:>13.1f}%{avg_mo:>16.1f}")
+
+
 def summarize_tier_group(indices, correction_months, is_censored, window=FALSE_SIGNAL_WINDOW):
     """indices: month indices in this tier group.
     correction_months[i] / is_censored[i] indexed by month index i."""
@@ -397,5 +465,7 @@ if __name__ == "__main__":
         recovery_time_by_severity()
     elif "--runway" in sys.argv:
         bull_market_runway_by_tier()
+    elif "--risk-opportunity" in sys.argv:
+        risk_vs_opportunity_framing()
     else:
         main()
