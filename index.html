@@ -486,11 +486,11 @@ setChip('heroChip', heroTier); renderMeterContinuous('heroMeter', heroScore);
 // heroTier, so it always matches the live composite reading with zero manual upkeep.
 const TIER_CONTEXT = {
   F:{short:'The rarest and most severe reading the index produces — in the only instance on record, a real correction followed every single time.',
-     stat:'100% historical correction likelihood · ~10 months from tier entry to correction · avg. 43.7% deep', timed:true},
+     stat:'100% historical correction likelihood · ~10 months from tier entry to correction · avg. -43.7% from the peak', timed:true},
   E:{short:'Severe — roughly an 8-in-10 historical chance of a 10%+ correction within two years.',
-     stat:'80% historical correction likelihood · ~14 months from tier entry to correction · avg. 34.5% deep', timed:true},
+     stat:'80% historical correction likelihood · ~14 months from tier entry to correction · avg. -34.5% from the peak', timed:true},
   D:{short:'The most common warning sign — a 60% historical chance of a correction, but the odds swing a lot depending on which gauge is actually driving the reading.',
-     stat:'60% historical correction likelihood · ~21 months from tier entry to correction · avg. 26.0% deep', timed:true},
+     stat:'60% historical correction likelihood · ~21 months from tier entry to correction · avg. -26.0% from the peak', timed:true},
   C:{short:'Fairly valued. A correction happens about a third of the time within two years — more often avoided than not — alongside real average upside.',
      stat:'80.5% avg. upside to the next peak (~47 months from tier entry) · 36% chance of a 10%+ correction within 2yr', timed:true},
   B:{short:'Favorably priced. A correction still happens about half the time within two years, but it tends to be shallow, and the average upside is large.',
