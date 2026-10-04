@@ -650,7 +650,7 @@ function drawHistoryChartInto(svg, plotId, xlabelId, points, labelSpecs, height,
   const ys = points.map(p=>p.y);
   const yMin = Math.max(0.5, Math.min(...ys) - 0.5);
   const yMax = Math.min(7.5, Math.max(...ys) + 0.5);
-  const padL = 26, padR = 4, padTop = 6, padBottom = 6;
+  const padL = 32, padR = 4, padTop = 6, padBottom = 6;
   const plotW = W - padL - padR;
   const xOf = i => padL + (i/(points.length-1)) * plotW;
   // score: 1=F ... 7=S ; higher score = higher on chart (lower y pixel)
@@ -668,17 +668,17 @@ function drawHistoryChartInto(svg, plotId, xlabelId, points, labelSpecs, height,
     rect.setAttribute('fill', TIER_COLOR[letter]); rect.setAttribute('opacity','0.13');
     svg.appendChild(rect);
     if(level>=yMin && level<=yMax){
-      const boxW = 17, boxH = 14;
-      const boxX = 3, boxY = yOf(level) - boxH/2;
+      const boxW = 23, boxH = 19;
+      const boxX = 4, boxY = yOf(level) - boxH/2;
       const chipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
       chipRect.setAttribute('x', boxX); chipRect.setAttribute('y', boxY);
       chipRect.setAttribute('width', boxW); chipRect.setAttribute('height', boxH);
-      chipRect.setAttribute('rx', 3.5);
+      chipRect.setAttribute('rx', 4.5);
       chipRect.setAttribute('fill', TIER_COLOR[letter]);
       svg.appendChild(chipRect);
       const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-      txt.setAttribute('x', boxX + boxW/2); txt.setAttribute('y', boxY + boxH/2 + 3.5);
-      txt.setAttribute('font-size','10'); txt.setAttribute('font-weight','700');
+      txt.setAttribute('x', boxX + boxW/2); txt.setAttribute('y', boxY + boxH/2 + 4);
+      txt.setAttribute('font-size','13'); txt.setAttribute('font-weight','700');
       txt.setAttribute('fill', TIER_TEXT[letter]); txt.setAttribute('font-family','JetBrains Mono, monospace');
       txt.setAttribute('text-anchor','middle');
       txt.textContent = letter;
