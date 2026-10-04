@@ -65,7 +65,9 @@
   .hero .eyebrow{font-size:12px; color:var(--sub); font-weight:500; margin-bottom:10px;}
   .hero-row{display:flex; align-items:center; gap:16px; margin-bottom:16px;}
   .tier-chip{border-radius:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex:none;}
-  .hero .tier-chip{width:64px; height:64px; font-size:34px;}
+  .hero .tier-chip{width:64px; height:64px; font-size:34px; position:relative; overflow:hidden;}
+  .hero .tier-chip .tier-chip-mark{position:absolute; width:58%; height:58%; right:-10%; bottom:-10%; opacity:0.2; pointer-events:none;}
+  .hero .tier-chip .tier-chip-letter{position:relative; z-index:1;}
   .hero .verdict{font-size:16.5px; font-weight:500; line-height:1.35;}
   .hero .verdict b{font-weight:700;}
   .hero .score{font-size:12px; color:var(--sub); margin-top:2px;}
@@ -260,7 +262,10 @@
     <svg class="hero-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
     <div class="eyebrow">Current composite reading</div>
     <div class="hero-row">
-      <div class="tier-chip" id="heroChip"></div>
+      <div class="tier-chip" id="heroChip">
+        <svg class="tier-chip-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
+        <span class="tier-chip-letter" id="heroChipLetter"></span>
+      </div>
       <div>
         <div class="verdict">Elevated caution &mdash; markets are priced with a <b>thin margin of safety</b>.</div>
         <div class="score mono" id="heroScoreText"></div>
@@ -416,6 +421,16 @@ const ORDER = ['F','E','D','C','B','A','S']; // worst -> best, left -> right
 function chip(letter){ return `background:${TIER_COLOR[letter]};color:${TIER_TEXT[letter]};`; }
 function setChip(id, letter){ const el=document.getElementById(id); el.textContent=letter; el.style.cssText+=chip(letter); }
 
+// Same as setChip, but for the one large tier chip (the hero card's) that carries a subtle
+// brandmark watermark in the corner -- sets the color on the chip itself (so the watermark's
+// currentColor automatically matches the letter's contrast-correct color on every tier) and
+// writes the letter into its own span instead of clobbering the watermark svg via textContent.
+function setBrandedChip(id, letter){
+  const el=document.getElementById(id);
+  el.style.cssText+=chip(letter);
+  document.getElementById(id+'Letter').textContent=letter;
+}
+
 function renderMeter(containerId, letter){
   const el = document.getElementById(containerId);
   const idx = ORDER.indexOf(letter);
@@ -483,7 +498,7 @@ const heroScore = composite(CURRENT_YC, CURRENT_PE, CURRENT_ECY);
 const heroTier = nearestTier(heroScore);
 document.getElementById('heroScoreText').textContent = `weighted score ${heroScore.toFixed(2)} / 7`;
 
-setChip('heroChip', heroTier); renderMeterContinuous('heroMeter', heroScore);
+setBrandedChip('heroChip', heroTier); renderMeterContinuous('heroMeter', heroScore);
 
 // Historical-context card: what this tier has actually meant since 1977, drawn from the
 // full backtest (see /history.html for the full breakdown). Renders automatically off
