@@ -515,27 +515,10 @@ const TIER_CONTEXT = {
   document.getElementById('contextShort').textContent = ctx.short;
   document.getElementById('contextStat').textContent = ctx.stat;
   document.getElementById('contextLink').href = `/history.html#tier-${heroTier.toLowerCase()}`;
-
-  // How long the *current* reading has actually been sitting in this tier, so the
-  // "months from tier entry" stat above isn't misread as "months from today."
-  const tenureEl = document.getElementById('contextTenure');
-  const noteEl = document.getElementById('contextNote');
-  const tierStartDate = new Date(LAST_TIER_CHANGE_ISO);
-  const msIn = Date.now() - tierStartDate.getTime();
-  const daysIn = Math.floor(msIn / (1000*60*60*24));
-  const monthsIn = Math.floor(daysIn / 30.44);
-  const sinceStr = tierStartDate.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', timeZone:'America/Chicago'});
-  let tenureText;
-  if(monthsIn < 1){
-    tenureText = daysIn <= 1 ? `This reading just entered ${heroTier} tier (as of ${sinceStr}).` : `You've been in ${heroTier} tier for ${daysIn} days so far (since ${sinceStr}).`;
-  } else {
-    tenureText = `You've been in ${heroTier} tier for ${monthsIn} month${monthsIn===1?'':'s'} so far (since ${sinceStr}).`;
-  }
-  tenureEl.textContent = tenureText;
-
-  noteEl.textContent = ctx.timed
-    ? 'Note: the timing figures above are averaged from the month a reading first enters the tier, not from today — they don’t simply subtract how long you’ve already been in it.'
-    : '';
+  // contextTenure/contextNote are filled in further down, once heroCurrentRun (the live,
+  // month-by-month tier streak used by the hero card's own streak line) is computed --
+  // reusing that same figure instead of a second calculation keeps the two cards from
+  // ever disagreeing about how long the current reading has actually been in this tier.
 })();
 
 function formatChecked(iso){
@@ -1060,6 +1043,21 @@ if(heroPastRuns.length === 0){
   heroStreakText += `. The longest ${heroTier}-tier stretch on record ran ${heroLongestPast.len} months, starting ${monthYearLabel(monthly[heroLongestPast.start][0])}.`;
 }
 document.getElementById('heroStreak').innerHTML = heroStreakText;
+
+// Historical-context card's tenure line reuses this same heroCurrentRun figure (rather
+// than a second, independent calculation) so it always says exactly the same "how long in
+// this tier" as the hero card's own streak line just above.
+(function(){
+  const ctx = TIER_CONTEXT[heroTier];
+  const tenureEl = document.getElementById('contextTenure');
+  const noteEl = document.getElementById('contextNote');
+  tenureEl.textContent = heroCurrentRun.len <= 1
+    ? `This reading just entered ${heroTier} tier this month (since ${heroStreakStartLabel}).`
+    : `You've been in ${heroTier} tier for ${heroCurrentRun.len} months so far (since ${heroStreakStartLabel}).`;
+  noteEl.textContent = ctx.timed
+    ? 'Note: the timing figures above are averaged from the month a reading first enters the tier, not from today — they don’t simply subtract how long you’ve already been in it.'
+    : '';
+})();
 
 // ---- Shared dropdown plumbing for the hero-actions row (Share / Get notified) -- both ----
 // live in the same row now instead of "Get notified" being its own separate card, so they
