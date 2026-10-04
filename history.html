@@ -60,11 +60,24 @@
   .footer-mark{display:block; width:26px; height:26px; margin:24px auto 0; color:var(--ink); opacity:0.35;}
 
   h1{font-size:24px; font-weight:700; margin:0 0 14px; letter-spacing:0.01em;}
-  h2{font-size:17px; font-weight:700; margin:30px 0 10px; display:flex; align-items:center; gap:9px;}
+  h2{font-size:17px; font-weight:700; margin:30px 0 10px; display:flex; align-items:center; gap:10px;}
   h2:first-of-type{margin-top:0;}
-  h3{font-size:14.5px; font-weight:700; margin:22px 0 4px; display:flex; align-items:center; gap:9px;}
+  h3{font-size:14.5px; font-weight:700; margin:22px 0 4px; line-height:1.5;}
+  h3 .chip{vertical-align:middle; margin:0 1px;}
   .h2-mark{width:17px; height:17px; flex:none; color:var(--ink);}
-  .tier-dot{width:11px; height:11px; border-radius:50%; flex:none; display:inline-block;}
+
+  .chip{display:inline-flex; align-items:center; justify-content:center; font-weight:700; border-radius:6px; flex:none; font-family:'JetBrains Mono',ui-monospace,monospace;}
+  .chip-lg{width:30px; height:30px; font-size:15px; border-radius:8px;}
+  .chip-sm{width:22px; height:22px; font-size:11.5px;}
+  .chip-xs{width:19px; height:19px; font-size:10.5px; border-radius:5px;}
+  .chip-f{background:var(--f); color:#fff;}
+  .chip-e{background:var(--e); color:#fff;}
+  .chip-d{background:var(--d); color:#0b2733;}
+  .chip-c{background:var(--c); color:#fff;}
+  .chip-b{background:var(--b); color:#2b2200;}
+  .chip-a{background:var(--a); color:#fff;}
+  .chip-s{background:var(--s); color:#fff;}
+  .toc a.chip{text-decoration:none; border-radius:14px; width:auto; padding:5px 11px; font-family:'Oswald',sans-serif;}
   p{font-size:14.5px; line-height:1.65; color:var(--ink); margin:0 0 14px;}
   p:last-child{margin-bottom:0;}
   .lede{font-size:15.5px; line-height:1.65; color:var(--ink);}
@@ -82,7 +95,8 @@
   .data-table{width:100%; border-collapse:collapse; margin:4px 0 16px; font-size:12.5px;}
   .data-table th, .data-table td{padding:8px 8px; text-align:left; border-bottom:1px solid var(--line); line-height:1.4;}
   .data-table th{color:var(--sub); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:0.02em;}
-  .data-table td.tier-cell{font-weight:700; width:1%; white-space:nowrap;}
+  .data-table td.tier-cell{font-weight:700; width:1%; white-space:nowrap; vertical-align:middle;}
+  .data-table td.tier-cell .chip{margin-right:7px; vertical-align:middle;}
   .data-table-wrap{overflow-x:auto; margin:0 0 16px;}
 
   .caution{font-size:12.5px; line-height:1.6; color:var(--sub); font-style:italic; margin:4px 0 0;}
@@ -122,32 +136,32 @@
     <p>The same letter can arise for different reasons, though, so the first question worth asking of any reading isn't just &ldquo;what tier is this&rdquo; but &ldquo;which gauge is actually driving it.&rdquo; A tier caused by an expensive stock market behaves differently than the same tier caused by a flat yield curve or a thin earnings yield &mdash; the composite number looks identical, but the underlying story, and the historical precedent, is not.</p>
 
     <div class="toc">
-      <a href="#tier-f">F</a><a href="#tier-e">E</a><a href="#tier-d">D</a><a href="#tier-c">C</a><a href="#tier-b">B</a><a href="#tier-a">A</a><a href="#tier-s">S</a>
+      <a href="#tier-f" class="chip chip-f">F</a><a href="#tier-e" class="chip chip-e">E</a><a href="#tier-d" class="chip chip-d">D</a><a href="#tier-c" class="chip chip-c">C</a><a href="#tier-b" class="chip chip-b">B</a><a href="#tier-a" class="chip chip-a">A</a><a href="#tier-s" class="chip chip-s">S</a>
       <a href="#timing">Timing</a><a href="#bull-runs">Bull runs</a><a href="#track-record">Track record</a><a href="#caveats">Caveats</a>
     </div>
 
     <h2><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>The big picture, at a glance</h2>
     <p><b>Risk tiers (F, E, D)</b> describe conditions historically tied to above-average odds of a correction. <b>Opportunity tiers (C, B, A)</b> describe fairly-to-favorably priced conditions, where the dominant story has been further upside, alongside a real but lower-odds chance of a correction along the way. Moving down the alphabet means the market is progressively more &ldquo;priced for trouble&rdquo;; moving up means progressively cheaper and safer &mdash; though as the numbers below show, cheap doesn't mean upside is guaranteed, and expensive doesn't mean a crash is imminent.</p>
 
-    <h3>Risk tiers (F/E/D): correction likelihood, timing, size, and the cost of being wrong</h3>
+    <h3>Risk tiers (<span class="chip chip-f chip-xs">F</span>/<span class="chip chip-e chip-xs">E</span>/<span class="chip chip-d chip-xs">D</span>): correction likelihood, timing, size, and the cost of being wrong</h3>
     <p>Each row below is one <i>episode</i> &mdash; a continuous stretch spent in that tier &mdash; not one month, so a 14-month stay in D counts once, not 14 times. &ldquo;Correction likelihood %&rdquo; is the share of those episodes followed by a real 10%+ drop in the S&amp;P 500 within 24 months; it's a yes/no read on whether a correction of that minimum size happened at all, not how deep it went (that's the separate &ldquo;Avg. size of correction&rdquo; column, which averages the actual peak-to-trough drawdown among the episodes that did correct). &ldquo;Penalty if it's a false alarm&rdquo; is what you'd have missed out on by staying defensive through a reading that never actually led anywhere &mdash; &ldquo;never happens&rdquo; means F has never once produced a false alarm to measure a penalty from.</p>
     <div class="data-table-wrap"><table class="data-table">
       <tr><th>Tier</th><th>Correction likelihood %</th><th>Avg. months to correction</th><th>Avg. size of correction</th><th>Penalty if it's a false alarm</th></tr>
-      <tr><td class="tier-cell"><span class="tier-dot" style="background:var(--f);"></span> F</td><td>100%</td><td>10.0</td><td>43.7%</td><td>never happens (0 false alarms on record)</td></tr>
-      <tr><td class="tier-cell"><span class="tier-dot" style="background:var(--e);"></span> E</td><td>80%</td><td>14.0</td><td>34.5%</td><td>~34% missed upside</td></tr>
-      <tr><td class="tier-cell"><span class="tier-dot" style="background:var(--d);"></span> D</td><td>60%</td><td>21.1</td><td>26.0%</td><td>~78% missed upside</td></tr>
+      <tr><td class="tier-cell"><span class="chip chip-f chip-sm">F</span></td><td>100%</td><td>10.0</td><td>43.7%</td><td>never happens (0 false alarms on record)</td></tr>
+      <tr><td class="tier-cell"><span class="chip chip-e chip-sm">E</span></td><td>80%</td><td>14.0</td><td>34.5%</td><td>~34% missed upside</td></tr>
+      <tr><td class="tier-cell"><span class="chip chip-d chip-sm">D</span></td><td>60%</td><td>21.1</td><td>26.0%</td><td>~78% missed upside</td></tr>
     </table></div>
 
-    <h3>Opportunity tiers (C/B/A): upside, timing, and the cost of being wrong</h3>
+    <h3>Opportunity tiers (<span class="chip chip-c chip-xs">C</span>/<span class="chip chip-b chip-xs">B</span>/<span class="chip chip-a chip-xs">A</span>): upside, timing, and the cost of being wrong</h3>
     <p>&ldquo;Being wrong&rdquo; here means a correction happened anyway despite the safe reading. &ldquo;Penalty&rdquo; is what that correction actually cost &mdash; how deep it went, and how long it took to get back to even. (The same splits that matter for F/E/D &mdash; how a reading got there, how long it's persisted &mdash; also show up in C/B/A; they aren't broken into separate rows here because the samples get thin once you slice this far.)</p>
     <div class="data-table-wrap"><table class="data-table">
       <tr><th>Tier</th><th>Avg. upside %</th><th>Avg. months to the peak</th><th>Penalty if wrong (depth, time to recover)</th></tr>
-      <tr><td class="tier-cell"><span class="tier-dot" style="background:var(--c);"></span> C</td><td>80.5%</td><td>46.6</td><td>&minus;22.7%, ~15.4 months to recover</td></tr>
-      <tr><td class="tier-cell"><span class="tier-dot" style="background:var(--b);"></span> B</td><td>117.2%</td><td>61.7</td><td>&minus;17.7%, ~9.2 months to recover</td></tr>
-      <tr><td class="tier-cell"><span class="tier-dot" style="background:var(--a);"></span> A</td><td>137.1%</td><td>62.3</td><td>&minus;19.0%, ~10.7 months to recover</td></tr>
+      <tr><td class="tier-cell"><span class="chip chip-c chip-sm">C</span></td><td>80.5%</td><td>46.6</td><td>&minus;22.7%, ~15.4 months to recover</td></tr>
+      <tr><td class="tier-cell"><span class="chip chip-b chip-sm">B</span></td><td>117.2%</td><td>61.7</td><td>&minus;17.7%, ~9.2 months to recover</td></tr>
+      <tr><td class="tier-cell"><span class="chip chip-a chip-sm">A</span></td><td>137.1%</td><td>62.3</td><td>&minus;19.0%, ~10.7 months to recover</td></tr>
     </table></div>
 
-    <h2 id="tier-f"><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>F &mdash; extreme risk, and exceptionally rare</h2>
+    <h2 id="tier-f"><span class="chip chip-f chip-lg">F</span> Extreme risk, and exceptionally rare</h2>
     <p class="in-short">In short: the rarest and most severe reading the index produces &mdash; in the only instance on record, a real correction followed every single time.</p>
     <p>F only happens when all three gauges are extreme at once: the market overvalued, the curve weak, and earnings yield negative. Any one gauge being bad isn't enough &mdash; all three have to line up together, which is hard to produce by accident.</p>
     <p class="example"><b>Example:</b> it's happened once &mdash; Feb&ndash;Sep 2000, right at the dot-com top, with PE above 42 and earnings yield actually negative. Since it's a single episode, there's no sub-pattern to mine; the rarity itself is the signal.</p>
@@ -157,7 +171,7 @@
       <li>With n=8 months from a single episode, that's &ldquo;this is what the one time looked like,&rdquo; not a statistical rate.</li>
     </ul>
 
-    <h2 id="tier-e"><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>E &mdash; high risk</h2>
+    <h2 id="tier-e"><span class="chip chip-e chip-lg">E</span> High risk</h2>
     <p class="in-short">In short: severe &mdash; roughly an 8-in-10 historical chance of a 10%+ correction within two years.</p>
     <p>Within E, what matters isn't the label but how far below the D boundary the reading sits. A reading barely tipped into E usually means just one gauge softened a little &mdash; a wobble, not a trend. A reading sinking deep into E, close to F, usually means multiple gauges are deteriorating together &mdash; a broader, more durable kind of weakness.</p>
     <p class="example"><b>Example:</b> in 1999, PE and earnings yield were both sinking hard (PE low 40s, earnings yield negative) &mdash; a deep E that was really pre-F &mdash; and the dot-com crash followed within months. Compare 2024&ndash;2026, where PE and the curve are only mildly over the line and earnings yield is still fine &mdash; a borderline E that's really pre-D, and no crash has followed.</p>
@@ -168,7 +182,7 @@
       <li>At the 20% threshold, tenure is what matters instead: a fresh E still misses about 10% of the time even given 3 years, while a sustained E essentially never does, with the correction landing 21-24 months out either way.</li>
     </ul>
 
-    <h2 id="tier-d"><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>D &mdash; borderline risk</h2>
+    <h2 id="tier-d"><span class="chip chip-d chip-lg">D</span> Borderline risk</h2>
     <p class="in-short">In short: the most common warning sign &mdash; a 60% historical chance of a correction, but the odds swing a lot depending on which gauge is actually driving the reading.</p>
     <p>D is the tier where <i>which</i> input is weak matters more than the tier itself, because the two ways into D mean different things economically. If Shiller PE is pulling the score down, that's a valuation problem &mdash; price has run ahead of earnings &mdash; and valuation problems tend to eventually resolve through a correction. If instead the yield curve and earnings yield are doing the dragging while PE stays reasonable, that reflects interest-rate conditions rather than a mispriced market, and it can persist for years without needing to correct at all.</p>
     <p class="example"><b>Example:</b> Dec 2020/Jan 2021 was the first kind &mdash; PE alone was rich (~34) while the other two were fine &mdash; and the 2022 bear market arrived about 22 months later. Mid-1995 was the second kind &mdash; the curve was flat and earnings yield thin, but PE sat at a reasonable 22-25 &mdash; and it took over three years to see any real pullback.</p>
@@ -179,7 +193,7 @@
       <li>Which gauge is lagging keeps working at both thresholds: a PE-led D is wrong 0% of the time at the 10% level and only 26% at the 20% level, resolving in 8-17 months; a D led jointly by the yield curve and earnings yield is wrong 53% of the time at 10% and 40% at 20%, taking 24-41 months when it resolves.</li>
     </ul>
 
-    <h2 id="tier-c"><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>C &mdash; fair value</h2>
+    <h2 id="tier-c"><span class="chip chip-c chip-lg">C</span> Fair value</h2>
     <p class="in-short">In short: fairly valued. A correction happens about a third of the time within two years &mdash; more often avoided than not &mdash; alongside real average upside.</p>
     <p>C spans the whole &ldquo;fairly priced&rdquo; range, so where a reading sits inside that range shows how much room is left before the market crosses into stretched territory. Near the B side, there's genuine room left to improve. Near the D side, it's one soft print away from a downgrade &mdash; usually a sign the rally itself is running low on fuel.</p>
     <p class="example"><b>Example:</b> July 1993 sat comfortably inside C, near the B side, with 158% of upside still ahead. January 2018 sat barely inside C, near the D side, with only 4% left &mdash; the &ldquo;Volmageddon&rdquo; correction followed within weeks.</p>
@@ -189,7 +203,7 @@
       <li>That risk splits by position: a near-B C reading is wrong only 30% of the time, correcting nearly 4 years out on average; a near-D C reading is wrong two-thirds of the time, usually within 2 years.</li>
     </ul>
 
-    <h2 id="tier-b"><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>B &mdash; favorable conditions</h2>
+    <h2 id="tier-b"><span class="chip chip-b chip-lg">B</span> Favorable conditions</h2>
     <p class="in-short">In short: favorably priced. A correction still happens about half the time within two years, but it tends to be shallow, and the average upside is large.</p>
     <p>A B that all three gauges agree on is a different thing from a B produced by averaging one good gauge with one mediocre one. The first means broadly healthy conditions; the second means a market that's good in some ways and merely okay in others, blended into a tier it doesn't fully earn.</p>
     <p class="example"><b>Example:</b> the genuine three-way B's (Aug/Oct 2010, Oct 2011, right after the financial crisis) averaged about 160% upside before the next top. The blended B's averaged only about 80%.</p>
@@ -199,7 +213,7 @@
       <li>Consensus shows up mainly in upside, not in how often a correction happens: genuine three-way B's carry about twice the remaining upside of blended B's (160% vs 80%), but the unanimous group is only n=6 &mdash; too thin to say its correction odds actually differ.</li>
     </ul>
 
-    <h2 id="tier-a"><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>A &mdash; excellent conditions</h2>
+    <h2 id="tier-a"><span class="chip chip-a chip-lg">A</span> Excellent conditions</h2>
     <p class="in-short">In short: the most favorable conditions on record. Correction risk is real but lower than any other tier, and average upside is the highest of all.</p>
     <p>A tells you conditions are excellent right now, but it has no memory of how long they've already been excellent &mdash; so the same A reading can mean very different amounts of remaining opportunity. A fresh A describes a market early in a recovery, with most of the next bull run still ahead. A long-sustained A describes a market that's already spent a lot of that runway, even though the number hasn't moved.</p>
     <p class="example"><b>Example:</b> March 2009 &mdash; literally the bottom of the financial crisis, the month A first lit up &mdash; had roughly 280% of upside still ahead of the eventual 2018 peak. By mid-1983, 18 months into an A stretch that began in 1982, only about 100% remained before the market's next real top in 1987.</p>
@@ -209,7 +223,7 @@
       <li>A fresh A is actually more likely to hit one of those smaller wobbles along the way (54% vs 26% for a sustained A), even though it's the fresh A that carries by far the most total upside (120% vs 71%) &mdash; the early months of a new bull run are bumpier, not calmer, even as they're the most rewarding stretch to be in.</li>
     </ul>
 
-    <h2 id="tier-s"><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>S &mdash; never happened</h2>
+    <h2 id="tier-s"><span class="chip chip-s chip-lg">S</span> Never happened</h2>
     <p>The composite has never actually reached S in this history (1977&ndash;present), so there's no mechanism to describe.</p>
     <p class="caution">Caution: most of the stories above are one or two illustrative episodes, not dozens of independent trials &mdash; the mechanism is likely real, but don't treat the exact numbers as precise. The tables above are the full data these stories are drawn from.</p>
 
@@ -217,9 +231,9 @@
     <p>Risk in F/E/D is not constant over time &mdash; it sharpens the longer the tier has already persisted, at least through the first ~6 months.</p>
     <div class="data-table-wrap"><table class="data-table">
       <tr><th>Tier</th><th>0&ndash;2 months in</th><th>3+ months in</th></tr>
-      <tr><td class="tier-cell">F</td><td>0% (n=3)</td><td>0% (n=5)</td></tr>
-      <tr><td class="tier-cell">E</td><td>7.7% (n=13)</td><td>6.2% (n=16)</td></tr>
-      <tr><td class="tier-cell">D</td><td>39.5% (n=38)</td><td>10.9% (n=101)</td></tr>
+      <tr><td class="tier-cell"><span class="chip chip-f chip-sm">F</span></td><td>0% (n=3)</td><td>0% (n=5)</td></tr>
+      <tr><td class="tier-cell"><span class="chip chip-e chip-sm">E</span></td><td>7.7% (n=13)</td><td>6.2% (n=16)</td></tr>
+      <tr><td class="tier-cell"><span class="chip chip-d chip-sm">D</span></td><td>39.5% (n=38)</td><td>10.9% (n=101)</td></tr>
     </table></div>
     <p><b>Rule of thumb:</b> this is really a D-tier effect, not a general F/E/D one &mdash; D's false-signal rate drops from 39.5% to 10.9% after month 3, while E barely moves (7.7% &rarr; 6.2%) and F is 0% either way (and too rare to read much into). So the &ldquo;give it 3 months&rdquo; discount applies specifically to a fresh D-tier reading; E and F don't show much of a honeymoon-period effect at all &mdash; and even D's effect is mostly a selection effect rather than time itself doing the work: the D episodes that end up running 3+ months are disproportionately the ones that were always going to be reliable, and waiting even longer doesn't keep helping (false-signal rates climb back toward 25%+ by month 18-24 within those same long episodes).</p>
     <p>Why: probably some mix of (a) real deterioration compounding the longer conditions stay stretched, and (b) short dips being disproportionately noise that reverts before a correction ever shows up &mdash; can't fully separate the two with only ~22 bad-tier episodes in the sample.</p>
@@ -228,8 +242,8 @@
     <p>Both of the two long multi-year bull runs in the data trace the same arc &mdash; start cheap, grind richer, top out at C or D:</p>
     <div class="data-table-wrap"><table class="data-table">
       <tr><th>Run</th><th>Start (trough)</th><th>Mid-run</th><th>End (next peak)</th></tr>
-      <tr><td class="tier-cell">1982&ndash;1990</td><td>A (6.00)</td><td>B, most of 1985&ndash;88</td><td>C (3.75) at the 1990-06 peak</td></tr>
-      <tr><td class="tier-cell">2009&ndash;2020</td><td>A (5.75)</td><td>B (2009&ndash;14), then C (2014&ndash;18)</td><td>D (3.38) at the 2020-01 peak</td></tr>
+      <tr><td class="tier-cell">1982&ndash;1990</td><td><span class="chip chip-a chip-xs">A</span> 6.00</td><td><span class="chip chip-b chip-xs">B</span> most of 1985&ndash;88</td><td><span class="chip chip-c chip-xs">C</span> 3.75 at the 1990-06 peak</td></tr>
+      <tr><td class="tier-cell">2009&ndash;2020</td><td><span class="chip chip-a chip-xs">A</span> 5.75</td><td><span class="chip chip-b chip-xs">B</span> 2009&ndash;14, then <span class="chip chip-c chip-xs">C</span> 2014&ndash;18</td><td><span class="chip chip-d chip-xs">D</span> 3.38 at the 2020-01 peak</td></tr>
     </table></div>
     <p>Neither run ever slid back into F/E territory once underway &mdash; that only happens at the extreme troughs themselves. The composite instead decays steadily, about one tier every several years, and by the time a long rally finally tops out it's typically sitting at C or D, not deep into danger territory. The 2010s run went one tier further (down to D) than the 80s run (stopped at C), consistent with it being the longer, bigger rally.</p>
 
@@ -237,8 +251,8 @@
     <p>The index's two biggest tests &mdash; the only 30%+ crashes in the 49-year sample &mdash; split one-for-two, and the miss is the expensive one.</p>
     <div class="data-table-wrap"><table class="data-table">
       <tr><th>Crash</th><th>At the peak</th><th>12mo before</th><th>24mo before</th><th>36mo before</th></tr>
-      <tr><td>2000 dot-com (&minus;43.7%, 81mo to recover)</td><td class="tier-cell">F</td><td class="tier-cell">E</td><td class="tier-cell">E</td><td class="tier-cell">D</td></tr>
-      <tr><td>2007-08 GFC (&minus;50.8%, 65mo to recover &mdash; the costliest episode in the dataset)</td><td class="tier-cell">C</td><td class="tier-cell">D</td><td class="tier-cell">C</td><td class="tier-cell">C</td></tr>
+      <tr><td>2000 dot-com (&minus;43.7%, 81mo to recover)</td><td class="tier-cell"><span class="chip chip-f chip-sm">F</span></td><td class="tier-cell"><span class="chip chip-e chip-sm">E</span></td><td class="tier-cell"><span class="chip chip-e chip-sm">E</span></td><td class="tier-cell"><span class="chip chip-d chip-sm">D</span></td></tr>
+      <tr><td>2007-08 GFC (&minus;50.8%, 65mo to recover &mdash; the costliest episode in the dataset)</td><td class="tier-cell"><span class="chip chip-c chip-sm">C</span></td><td class="tier-cell"><span class="chip chip-d chip-sm">D</span></td><td class="tier-cell"><span class="chip chip-c chip-sm">C</span></td><td class="tier-cell"><span class="chip chip-c chip-sm">C</span></td></tr>
     </table></div>
     <p>The index flagged 2000 years in advance. It never got worse than C/D heading into 2008 &mdash; essentially no warning before the single worst crash in the data. With only two data points this can't be generalized, but it's a real, specific gap worth remembering: GFC-style credit/leverage crises may not be the kind of risk PE/EY/yield-curve valuation metrics are built to see.</p>
 
