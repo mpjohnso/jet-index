@@ -225,7 +225,9 @@
   .context-body{min-width:0;}
   .context-short{font-size:13.5px; line-height:1.5; color:var(--ink); margin-bottom:5px;}
   .context-stat{font-size:12px; color:var(--sub); line-height:1.4; font-family:'JetBrains Mono',ui-monospace,monospace;}
-  .context-link{display:inline-block; margin-top:14px; font-size:12.5px; font-weight:600; color:var(--ink); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:1px;}
+  .context-tenure{font-size:12px; color:var(--ink); line-height:1.4; margin-top:4px;}
+  .context-note{font-size:11.5px; color:var(--sub); line-height:1.5; font-style:italic; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+  .context-link{display:inline-block; margin-top:12px; font-size:12.5px; font-weight:600; color:var(--ink); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:1px;}
   .context-link:hover{opacity:0.7;}
 
   .note{margin-top:18px; padding:14px 16px; border:1px dashed var(--line); border-radius:12px; font-size:12.5px; color:var(--sub); line-height:1.55; background:var(--panel);}
@@ -304,8 +306,10 @@
       <div class="context-body">
         <div class="context-short" id="contextShort"></div>
         <div class="context-stat" id="contextStat"></div>
+        <div class="context-tenure" id="contextTenure"></div>
       </div>
     </div>
+    <div class="context-note" id="contextNote"></div>
     <a class="context-link" id="contextLink" href="/history.html">Read the full historical breakdown &rarr;</a>
   </div>
 
@@ -487,19 +491,19 @@ setChip('heroChip', heroTier); renderMeterContinuous('heroMeter', heroScore);
 // heroTier, so it always matches the live composite reading with zero manual upkeep.
 const TIER_CONTEXT = {
   F:{short:'The rarest and most severe reading the index produces — in the only instance on record, a real correction followed every single time.',
-     stat:'100% historical correction likelihood · ~10 months to correction · avg. 43.7% deep'},
+     stat:'100% historical correction likelihood · ~10 months from tier entry to correction · avg. 43.7% deep', timed:true},
   E:{short:'Severe — roughly an 8-in-10 historical chance of a 10%+ correction within two years.',
-     stat:'80% historical correction likelihood · ~14 months to correction · avg. 34.5% deep'},
+     stat:'80% historical correction likelihood · ~14 months from tier entry to correction · avg. 34.5% deep', timed:true},
   D:{short:'The most common warning sign — a 60% historical chance of a correction, but the odds swing a lot depending on which gauge is actually driving the reading.',
-     stat:'60% historical correction likelihood · ~21 months to correction · avg. 26.0% deep'},
+     stat:'60% historical correction likelihood · ~21 months from tier entry to correction · avg. 26.0% deep', timed:true},
   C:{short:'Fairly valued. A correction happens about a third of the time within two years — more often avoided than not — alongside real average upside.',
-     stat:'80.5% avg. upside to the next peak · 36% chance of a 10%+ correction within 2yr'},
+     stat:'80.5% avg. upside to the next peak (~47 months from tier entry) · 36% chance of a 10%+ correction within 2yr', timed:true},
   B:{short:'Favorably priced. A correction still happens about half the time within two years, but it tends to be shallow, and the average upside is large.',
-     stat:'117.2% avg. upside to the next peak · 51% chance of a 10%+ correction within 2yr'},
+     stat:'117.2% avg. upside to the next peak (~62 months from tier entry) · 51% chance of a 10%+ correction within 2yr', timed:true},
   A:{short:'The most favorable conditions on record. Correction risk is real but lower than any other tier, and average upside is the highest of all.',
-     stat:'137.1% avg. upside to the next peak · 37% chance of a 10%+ correction within 2yr'},
+     stat:'137.1% avg. upside to the next peak (~62 months from tier entry) · 37% chance of a 10%+ correction within 2yr', timed:true},
   S:{short:'Never happened in this history (1977–present) — there is no track record to draw on.',
-     stat:'0 occurrences on record'}
+     stat:'0 occurrences on record', timed:false}
 };
 (function(){
   const ctx = TIER_CONTEXT[heroTier];
@@ -507,6 +511,27 @@ const TIER_CONTEXT = {
   document.getElementById('contextShort').textContent = ctx.short;
   document.getElementById('contextStat').textContent = ctx.stat;
   document.getElementById('contextLink').href = `/history.html#tier-${heroTier.toLowerCase()}`;
+
+  // How long the *current* reading has actually been sitting in this tier, so the
+  // "months from tier entry" stat above isn't misread as "months from today."
+  const tenureEl = document.getElementById('contextTenure');
+  const noteEl = document.getElementById('contextNote');
+  const tierStartDate = new Date(LAST_TIER_CHANGE_ISO);
+  const msIn = Date.now() - tierStartDate.getTime();
+  const daysIn = Math.floor(msIn / (1000*60*60*24));
+  const monthsIn = Math.floor(daysIn / 30.44);
+  const sinceStr = tierStartDate.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', timeZone:'America/Chicago'});
+  let tenureText;
+  if(monthsIn < 1){
+    tenureText = daysIn <= 1 ? `This reading just entered ${heroTier} tier (as of ${sinceStr}).` : `You've been in ${heroTier} tier for ${daysIn} days so far (since ${sinceStr}).`;
+  } else {
+    tenureText = `You've been in ${heroTier} tier for ${monthsIn} month${monthsIn===1?'':'s'} so far (since ${sinceStr}).`;
+  }
+  tenureEl.textContent = tenureText;
+
+  noteEl.textContent = ctx.timed
+    ? 'Note: the timing figures above are averaged from the month a reading first enters the tier, not from today — they don’t simply subtract how long you’ve already been in it.'
+    : '';
 })();
 
 function formatChecked(iso){
