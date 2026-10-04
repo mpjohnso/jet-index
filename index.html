@@ -408,8 +408,12 @@
 <script>
 const LAST_CHECKED_ISO = '2026-10-03T14:45:36Z';
 const LAST_CHANGED_ISO = '2026-10-02T11:38:36Z';
-// Bootstrap: treat "now" as the most recent tier-change baseline until a real one is recorded.
-const LAST_TIER_CHANGE_ISO = '2026-10-02T11:38:36Z';
+// The composite actually moved D -> E in May 2026 per the monthly backtest data (monthly
+// resolution only, so this is pinned to the 1st of that month, not an exact day) -- NOT on
+// LAST_CHANGED_ISO's date, which was a stale bootstrap placeholder left over from before this
+// was corrected against the real history. Update this only when composite() actually crosses
+// a tier boundary going forward.
+const LAST_TIER_CHANGE_ISO = '2026-05-01T00:00:00Z';
 const TIER_COLOR = {S:'#e0473d',A:'#ef8f1e',B:'#f3cf3d',C:'#4fae59',D:'#63b8de',E:'#2f6fb0',F:'#c92f86'};
 const TIER_TEXT  = {S:'#fff',A:'#fff',B:'#2b2200',C:'#fff',D:'#0b2733',E:'#fff',F:'#fff'};
 const ORDER = ['F','E','D','C','B','A','S']; // worst -> best, left -> right
