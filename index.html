@@ -45,11 +45,14 @@
   .logo{grid-column:1; grid-row:1; align-self:center; width:64px; height:64px; flex:none; color:var(--ink);}
   .wordmark{grid-column:2; grid-row:1; align-self:center; font-size:26px; font-weight:700; letter-spacing:0.03em; margin:0; line-height:1.1; min-width:0;}
   header .tagline{grid-column:2; grid-row:2; align-self:start; font-size:13.5px; color:var(--sub); font-weight:400; margin-top:3px; letter-spacing:0.01em;}
+  .nav-links{display:flex; gap:8px; flex-wrap:wrap; flex:none;}
   .about-link{font-size:12px; font-weight:600; color:var(--ink); text-decoration:none; border:1px solid var(--line); border-radius:16px; padding:6px 12px; white-space:nowrap; flex:none;}
+  .about-link:hover{background:var(--bg);}
   @media (max-width:480px){
     /* Below this, "JOHNSON ECONOMIC TIER" needs the full row to wrap by word (not mid-word) --
-       drop the about-link to its own row underneath rather than letting it squeeze the title. */
-    .about-link{flex-basis:100%; margin-left:78px; width:fit-content; max-width:calc(100% - 78px); box-sizing:border-box; white-space:normal; text-align:center;}
+       drop the nav links to their own row underneath rather than letting them squeeze the title. */
+    .nav-links{flex-basis:100%; margin-left:78px; width:fit-content; max-width:calc(100% - 78px); box-sizing:border-box;}
+    .about-link{white-space:normal; text-align:center;}
   }
 
   .card{background:var(--panel); border:1px solid var(--line); border-radius:12px;}
@@ -215,6 +218,16 @@
     .tier-legend-grid{display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(4,auto); grid-auto-flow:column; column-gap:22px;}
   }
 
+  .context-card{padding:16px 18px;}
+  .context-title{font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--sub); margin-bottom:12px;}
+  .context-row{display:flex; align-items:center; gap:14px;}
+  .context-row .tier-chip{width:44px; height:44px; font-size:20px; border-radius:9px;}
+  .context-body{min-width:0;}
+  .context-short{font-size:13.5px; line-height:1.5; color:var(--ink); margin-bottom:5px;}
+  .context-stat{font-size:12px; color:var(--sub); line-height:1.4; font-family:'JetBrains Mono',ui-monospace,monospace;}
+  .context-link{display:inline-block; margin-top:14px; font-size:12.5px; font-weight:600; color:var(--ink); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:1px;}
+  .context-link:hover{opacity:0.7;}
+
   .note{margin-top:18px; padding:14px 16px; border:1px dashed var(--line); border-radius:12px; font-size:12.5px; color:var(--sub); line-height:1.55; background:var(--panel);}
   .note b{color:var(--ink); font-weight:600;}
   .timestamp{text-align:center; font-size:11px; color:var(--sub); margin-top:16px;}
@@ -235,7 +248,10 @@
       <div class="wordmark">JOHNSON ECONOMIC TIER</div>
       <div class="tagline">JET Index &middot; U.S. market valuation gauge</div>
     </a>
-    <a href="/about.html" class="about-link">What is the JET Index?</a>
+    <div class="nav-links">
+      <a href="/about.html" class="about-link">What is the JET Index?</a>
+      <a href="/history.html" class="about-link">Tier history &amp; context</a>
+    </div>
   </header>
 
   <div class="card hero">
@@ -279,6 +295,18 @@
     <div class="tier-legend-title">Tier guide</div>
     <div class="tier-strip" id="tierStrip"></div>
     <div class="tier-legend-grid" id="tierLegendGrid"></div>
+  </div>
+
+  <div class="card context-card">
+    <div class="context-title">What this reading has meant historically</div>
+    <div class="context-row">
+      <div class="tier-chip" id="contextChip"></div>
+      <div class="context-body">
+        <div class="context-short" id="contextShort"></div>
+        <div class="context-stat" id="contextStat"></div>
+      </div>
+    </div>
+    <a class="context-link" id="contextLink" href="/history.html">Read the full historical breakdown &rarr;</a>
   </div>
 
   <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>The three inputs</div>
@@ -453,6 +481,33 @@ const heroTier = nearestTier(heroScore);
 document.getElementById('heroScoreText').textContent = `weighted score ${heroScore.toFixed(2)} / 7`;
 
 setChip('heroChip', heroTier); renderMeterContinuous('heroMeter', heroScore);
+
+// Historical-context card: what this tier has actually meant since 1977, drawn from the
+// full backtest (see /history.html for the full breakdown). Renders automatically off
+// heroTier, so it always matches the live composite reading with zero manual upkeep.
+const TIER_CONTEXT = {
+  F:{short:'The rarest and most severe reading the index produces — in the only instance on record, a real correction followed every single time.',
+     stat:'100% historical correction likelihood · ~10 months to correction · avg. 43.7% deep'},
+  E:{short:'Severe — roughly an 8-in-10 historical chance of a 10%+ correction within two years.',
+     stat:'80% historical correction likelihood · ~14 months to correction · avg. 34.5% deep'},
+  D:{short:'The most common warning sign — a 60% historical chance of a correction, but the odds swing a lot depending on which gauge is actually driving the reading.',
+     stat:'60% historical correction likelihood · ~21 months to correction · avg. 26.0% deep'},
+  C:{short:'Fairly valued. A correction happens about a third of the time within two years — more often avoided than not — alongside real average upside.',
+     stat:'80.5% avg. upside to the next peak · 36% chance of a 10%+ correction within 2yr'},
+  B:{short:'Favorably priced. A correction still happens about half the time within two years, but it tends to be shallow, and the average upside is large.',
+     stat:'117.2% avg. upside to the next peak · 51% chance of a 10%+ correction within 2yr'},
+  A:{short:'The most favorable conditions on record. Correction risk is real but lower than any other tier, and average upside is the highest of all.',
+     stat:'137.1% avg. upside to the next peak · 37% chance of a 10%+ correction within 2yr'},
+  S:{short:'Never happened in this history (1977–present) — there is no track record to draw on.',
+     stat:'0 occurrences on record'}
+};
+(function(){
+  const ctx = TIER_CONTEXT[heroTier];
+  setChip('contextChip', heroTier);
+  document.getElementById('contextShort').textContent = ctx.short;
+  document.getElementById('contextStat').textContent = ctx.stat;
+  document.getElementById('contextLink').href = `/history.html#tier-${heroTier.toLowerCase()}`;
+})();
 
 function formatChecked(iso){
   const d = new Date(iso);

@@ -35,12 +35,17 @@
   @media (min-width:700px){ .wrap{max-width:760px; padding:32px 28px 60px;} }
   @media (min-width:1000px){ .wrap{max-width:920px;} }
 
-  header{display:flex; align-items:center; gap:16px; margin-bottom:28px;}
+  header{display:flex; align-items:center; gap:16px; margin-bottom:28px; flex-wrap:wrap;}
   .brand-link:hover{opacity:0.75;}
   .brand-link{display:grid; grid-template-columns:64px 1fr; column-gap:14px; flex:1; min-width:0; text-decoration:none; color:inherit;}
   .logo{grid-column:1; grid-row:1; align-self:center; width:64px; height:64px; flex:none;}
   .wordmark{grid-column:2; grid-row:1; align-self:center; font-size:26px; font-weight:700; letter-spacing:0.03em; margin:0; line-height:1.1;}
   header .tagline{grid-column:2; grid-row:2; align-self:start; font-size:13.5px; color:var(--sub); font-weight:400; margin-top:3px; letter-spacing:0.01em;}
+  .about-link{font-size:12px; font-weight:600; color:var(--ink); text-decoration:none; border:1px solid var(--line); border-radius:16px; padding:6px 12px; white-space:nowrap; flex:none;}
+  .about-link:hover{background:var(--bg);}
+  @media (max-width:480px){
+    .about-link{flex-basis:100%; margin-left:78px; width:fit-content; max-width:calc(100% - 78px); box-sizing:border-box; white-space:normal; text-align:center;}
+  }
 
   .back-link{
     display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600;
@@ -97,6 +102,7 @@
       <div class="wordmark">JOHNSON ECONOMIC TIER</div>
       <div class="tagline">JET Index &middot; U.S. market valuation gauge</div>
     </a>
+    <a href="/history.html" class="about-link">Tier history &amp; context</a>
   </header>
 
   <a class="back-link" href="/">&larr; Back to the dashboard</a>
