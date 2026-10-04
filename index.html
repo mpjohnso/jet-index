@@ -218,16 +218,12 @@
     .tier-legend-grid{display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(4,auto); grid-auto-flow:column; column-gap:22px;}
   }
 
-  .context-card{padding:16px 18px;}
-  .context-title{font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--sub); margin-bottom:12px;}
-  .context-row{display:flex; align-items:center; gap:14px;}
-  .context-row .tier-chip{width:44px; height:44px; font-size:20px; border-radius:9px;}
-  .context-body{min-width:0;}
+  .context-block{margin-top:16px; padding-top:16px; border-top:1px dashed var(--line);}
+  .context-title{font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--sub); margin-bottom:8px;}
   .context-short{font-size:13.5px; line-height:1.5; color:var(--ink); margin-bottom:5px;}
   .context-stat{font-size:12px; color:var(--sub); line-height:1.4; font-family:'JetBrains Mono',ui-monospace,monospace;}
-  .context-tenure{font-size:12px; color:var(--ink); line-height:1.4; margin-top:4px;}
-  .context-note{font-size:11.5px; color:var(--sub); line-height:1.5; font-style:italic; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
-  .context-link{display:inline-block; margin-top:12px; font-size:12.5px; font-weight:600; color:var(--ink); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:1px;}
+  .context-note{font-size:11.5px; color:var(--sub); line-height:1.5; font-style:italic; margin-top:10px;}
+  .context-link{display:inline-block; margin-top:10px; font-size:12.5px; font-weight:600; color:var(--ink); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:1px;}
   .context-link:hover{opacity:0.7;}
 
   .note{margin-top:18px; padding:14px 16px; border:1px dashed var(--line); border-radius:12px; font-size:12.5px; color:var(--sub); line-height:1.55; background:var(--panel);}
@@ -270,6 +266,15 @@
     </div>
     <div class="meter" id="heroMeter"></div>
     <div class="score-changed" id="scoreChanged"></div>
+
+    <div class="context-block">
+      <div class="context-title">What this reading has meant historically</div>
+      <div class="context-short" id="contextShort"></div>
+      <div class="context-stat" id="contextStat"></div>
+      <div class="context-note" id="contextNote"></div>
+      <a class="context-link" id="contextLink" href="/history.html">Read the full historical breakdown &rarr;</a>
+    </div>
+
     <div class="hero-actions-caption">Share this reading, or leave your email to get notified when the score changes &mdash; not a daily check-in, just real changes.</div>
     <div class="hero-actions">
       <div class="share-wrap">
@@ -291,20 +296,6 @@
       <span class="share-copied" id="shareCopied" aria-live="polite"></span>
     </div>
     <div class="notify-status" id="notifyStatus"></div>
-  </div>
-
-  <div class="card context-card">
-    <div class="context-title">What this reading has meant historically</div>
-    <div class="context-row">
-      <div class="tier-chip" id="contextChip"></div>
-      <div class="context-body">
-        <div class="context-short" id="contextShort"></div>
-        <div class="context-stat" id="contextStat"></div>
-        <div class="context-tenure" id="contextTenure"></div>
-      </div>
-    </div>
-    <div class="context-note" id="contextNote"></div>
-    <a class="context-link" id="contextLink" href="/history.html">Read the full historical breakdown &rarr;</a>
   </div>
 
   <div class="card tier-legend">
@@ -511,14 +502,13 @@ const TIER_CONTEXT = {
 };
 (function(){
   const ctx = TIER_CONTEXT[heroTier];
-  setChip('contextChip', heroTier);
   document.getElementById('contextShort').textContent = ctx.short;
   document.getElementById('contextStat').textContent = ctx.stat;
   document.getElementById('contextLink').href = `/history.html#tier-${heroTier.toLowerCase()}`;
-  // contextTenure/contextNote are filled in further down, once heroCurrentRun (the live,
-  // month-by-month tier streak used by the hero card's own streak line) is computed --
-  // reusing that same figure instead of a second calculation keeps the two cards from
-  // ever disagreeing about how long the current reading has actually been in this tier.
+  // contextNote is filled in further down, once heroCurrentRun (the live, month-by-month
+  // tier streak used by the hero card's own streak line) is computed -- this historical
+  // context now lives inside the hero card itself, right under the same tier chip and
+  // streak line, so there's no separate chip or tenure line to render here anymore.
 })();
 
 function formatChecked(iso){
@@ -1044,16 +1034,12 @@ if(heroPastRuns.length === 0){
 }
 document.getElementById('heroStreak').innerHTML = heroStreakText;
 
-// Historical-context card's tenure line reuses this same heroCurrentRun figure (rather
-// than a second, independent calculation) so it always says exactly the same "how long in
-// this tier" as the hero card's own streak line just above.
+// The historical-context block now lives inside this same hero card, directly under the
+// streak line above, so there's no separate "how long in this tier" line to render here --
+// it would just repeat heroStreakText. Only the timing clarification note is still needed.
 (function(){
   const ctx = TIER_CONTEXT[heroTier];
-  const tenureEl = document.getElementById('contextTenure');
   const noteEl = document.getElementById('contextNote');
-  tenureEl.textContent = heroCurrentRun.len <= 1
-    ? `This reading just entered ${heroTier} tier this month (since ${heroStreakStartLabel}).`
-    : `You've been in ${heroTier} tier for ${heroCurrentRun.len} months so far (since ${heroStreakStartLabel}).`;
   noteEl.textContent = ctx.timed
     ? 'Note: the timing figures above are averaged from the month a reading first enters the tier, not from today — they don’t simply subtract how long you’ve already been in it.'
     : '';
