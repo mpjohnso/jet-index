@@ -366,7 +366,6 @@
 
   <div class="section-title"><svg class="title-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg><span id="recentSectionTitle">Last 3 years</span></div>
   <div class="card chart-card">
-    <svg class="card-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
     <div class="chart-head-row">
       <div class="chart-head">Recent trend, monthly</div>
       <div class="range-tabs" id="rangeTabs" role="tablist" aria-label="Chart time range">
@@ -686,6 +685,26 @@ function drawHistoryChartInto(svg, plotId, xlabelId, points, labelSpecs, height,
       svg.appendChild(txt);
     }
   }
+
+  // Subtle brandmark watermark, flush into the upper-right corner of the plotted (colored)
+  // area itself -- not bled off the outer card corner like the other watermarks on this site,
+  // since on a chart that corner overlaps the chart-head-row controls (range tabs) and looks
+  // messy. Drawn behind the gridlines/data line/peak markers below so it never competes with
+  // the actual trend for attention.
+  (function(){
+    const markSize = (H - padTop - padBottom) * 0.3;
+    const mark = document.createElementNS('http://www.w3.org/2000/svg','use');
+    mark.setAttribute('href', '#brandmark');
+    mark.setAttribute('x', W - padR - markSize);
+    mark.setAttribute('y', padTop);
+    mark.setAttribute('width', markSize);
+    mark.setAttribute('height', markSize);
+    mark.setAttribute('color', '#16181c');
+    mark.setAttribute('opacity', '0.14');
+    mark.style.pointerEvents = 'none';
+    svg.appendChild(mark);
+  })();
+
   // Light reference gridlines (month/quarter/year, depending on range) so a point on the
   // line can be read off against a specific point in time without needing to hover.
   if(gridIdxs && gridIdxs.length){

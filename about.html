@@ -88,7 +88,6 @@
   .peak-swatch{display:inline-block; width:12px; height:0; border-top:1.5px dashed #c0392b; margin-right:6px; vertical-align:middle;}
   .chart-status{font-size:12.5px; color:var(--sub); text-align:center; padding:20px 0;}
   .chart-frame{position:relative; overflow:hidden; border:1px solid var(--line); border-radius:12px; padding:14px 14px 10px; background:var(--bg); margin-top:2px;}
-  .chart-frame .card-mark{top:-18px; right:-18px; width:92px; height:92px; opacity:0.07;}
 
   .timestamp{text-align:center; font-size:11px; color:var(--sub); margin-top:22px;}
 </style>
@@ -136,7 +135,6 @@
     <h2 id="full-history"><svg class="h2-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>The full backtest</h2>
     <p>Every month since January 1977, run through the same formula &mdash; no cherry-picking, no retroactive tuning. The dashed red lines mark market peaks that came just before a major downturn, so it's easy to see how the reading actually behaved heading into each one. This chart is pulled live from the dashboard's own data, so it always reflects the latest month.</p>
     <div class="chart-frame">
-      <svg class="card-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
       <div id="chartStatus" class="chart-status">Loading the full backtest&hellip;</div>
       <div id="historyChartBlock" style="display:none;">
         <div class="chart-wrap">
@@ -275,6 +273,24 @@
           svg.appendChild(txt);
         }
       }
+
+      // Subtle brandmark watermark, flush into the upper-right corner of the plotted (colored)
+      // area itself, drawn behind the peak markers/data line below so it never competes with
+      // the actual trend for attention.
+      (function(){
+        const markSize = (H - padTop - padBottom) * 0.3;
+        const mark = document.createElementNS('http://www.w3.org/2000/svg','use');
+        mark.setAttribute('href', '#brandmark');
+        mark.setAttribute('x', W - padR - markSize);
+        mark.setAttribute('y', padTop);
+        mark.setAttribute('width', markSize);
+        mark.setAttribute('height', markSize);
+        mark.setAttribute('color', '#16181c');
+        mark.setAttribute('opacity', '0.14');
+        mark.style.pointerEvents = 'none';
+        svg.appendChild(mark);
+      })();
+
       if(peaks && peaks.length && yms){
         peaks.forEach(peak=>{
           const idx = yms.indexOf(peak.ym);
