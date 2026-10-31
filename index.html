@@ -108,6 +108,13 @@
   .momentum .arrow{font-size:13px; line-height:1;}
   .momentum .mag{font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:500; color:var(--sub);}
   .momentum.since-update{margin-top:-4px; opacity:0.85;}
+  .trend-toggle{align-self:flex-start; margin-top:10px; font-size:11.5px; font-weight:600; color:var(--ink); background:none; border:1px solid var(--line); border-radius:14px; padding:4px 11px; cursor:pointer; font-family:'Oswald',sans-serif; position:relative; z-index:1;}
+  .trend-panel{margin-top:10px; position:relative; z-index:1;}
+  .trend-ranges{display:flex; gap:6px; margin-bottom:6px;}
+  .trend-ranges button{font-size:10.5px; font-weight:600; color:var(--sub); background:none; border:1px solid var(--line); border-radius:10px; padding:2px 9px; cursor:pointer; font-family:'Oswald',sans-serif;}
+  .trend-ranges button.active{color:var(--ink); border-color:var(--ink);}
+  .trend-panel svg{width:100%; height:auto; display:block; overflow:visible;}
+  .trend-note{font-size:10.5px; color:var(--sub); margin-top:4px;}
   .momentum.since-update:empty{margin:0; display:none;}
 
   .compare-card{padding:16px 18px 18px;}
@@ -329,6 +336,8 @@
     <div class="momentum" id="momYC"></div>
     <div class="momentum since-update" id="sinceYC"></div>
     <div class="meter" id="meterYC"></div>
+    <button class="trend-toggle" type="button" data-input="YC" aria-expanded="false">Show trend &#9662;</button>
+    <div class="trend-panel" id="trendYC" hidden></div>
     <div class="metric-desc">10Y minus 2Y Treasury yield. Both ends have risen sharply this year &mdash; the 10Y is near a 20-year high &mdash; leaving a shallow spread, still below the C-tier line of 0.50%.</div>
   </div>
 
@@ -341,6 +350,8 @@
     <div class="momentum" id="momPE"></div>
     <div class="momentum since-update" id="sincePE"></div>
     <div class="meter" id="meterPE"></div>
+    <button class="trend-toggle" type="button" data-input="PE" aria-expanded="false">Show trend &#9662;</button>
+    <div class="trend-panel" id="trendPE" hidden></div>
     <div class="metric-desc">Price over 10-year real earnings. Past the F-tier line of 40 &mdash; a level seen only in 1999&ndash;2000 until this year.</div>
   </div>
 
@@ -353,6 +364,8 @@
     <div class="momentum" id="momEY"></div>
     <div class="momentum since-update" id="sinceEY"></div>
     <div class="meter" id="meterEY"></div>
+    <button class="trend-toggle" type="button" data-input="EY" aria-expanded="false">Show trend &#9662;</button>
+    <div class="trend-panel" id="trendEY" hidden></div>
     <div class="metric-desc">Earnings yield over the real 10Y Treasury yield. Thin premium &mdash; the smallest since 2002.</div>
   </div>
   </div>
@@ -1313,7 +1326,9 @@ function renderMomentum(containerId, deltaRaw, opts){
 function renderSinceChange(containerId, prevVal, curVal, opts){
   const el = document.getElementById(containerId);
   if(prevVal === curVal){ el.innerHTML = ''; return; }
-  renderMomentum(containerId, curVal - prevVal, Object.assign({}, opts, {flatEps: 0, label: 'since last update'}));
+  const when = new Date(LAST_CHANGED_ISO).toLocaleDateString('en-US', {month:'short', day:'numeric', timeZone:'America/Chicago'});
+  const f = opts.valFmt || (v => v.toFixed(2));
+  renderMomentum(containerId, curVal - prevVal, Object.assign({}, opts, {flatEps: 0, label: `(from ${f(prevVal)} to ${f(curVal)}, ${when})`}));
 }
 
 renderMomentum('momYC', rowNow[1]-rowThen[1], {
@@ -1341,16 +1356,73 @@ renderMomentum('momHero', scoreNow-scoreThen, {
 
 renderSinceChange('sinceYC', PREV_YC, CURRENT_YC, {
   favorableWhenPositive: true, unitFmt: d => `${d>=0?'+':''}${d.toFixed(2)}pp`,
-  upWord: 'steepened', downWord: 'flattened'
+  upWord: 'steepened', downWord: 'flattened', valFmt: v => v.toFixed(2)+'%'
 });
 renderSinceChange('sincePE', PREV_PE, CURRENT_PE, {
-  favorableWhenPositive: false, unitFmt: d => `${d>=0?'+':''}${d.toFixed(1)}`,
-  upWord: 'got richer', downWord: 'got cheaper'
+  favorableWhenPositive: false, unitFmt: d => `${d>=0?'+':''}${d.toFixed(2)}`,
+  upWord: 'got richer', downWord: 'got cheaper', valFmt: v => v.toFixed(2)
 });
 renderSinceChange('sinceEY', PREV_ECY, CURRENT_ECY, {
   favorableWhenPositive: true, unitFmt: d => `${d>=0?'+':''}${d.toFixed(2)}pp`,
-  upWord: 'widened', downWord: 'narrowed'
+  upWord: 'widened', downWord: 'narrowed', valFmt: v => v.toFixed(2)+'%'
 });
+
+
+// ---- Expandable trend charts on the three input cards (monthly readings, latest = live) ----
+(function(){
+  const INPUTS = {
+    YC:{col:1, unit:'%', dec:2, lines:[[0,'0'],[0.5,'0.5']]},
+    PE:{col:2, unit:'',  dec:1, lines:[[40,'40']]},
+    EY:{col:3, unit:'%', dec:2, lines:[[0,'0'],[1,'1']]}
+  };
+  const RANGES = {'3M':4, '6M':7, '1Y':13};
+  let range = '1Y';
+  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function draw(key){
+    const cfg = INPUTS[key], panel = document.getElementById('trend'+key);
+    const rows = monthly.slice(-RANGES[range]);
+    const vals = rows.map(r => r[cfg.col]);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    const pad = Math.max((hi-lo)*0.15, cfg.dec===1 ? 0.5 : 0.05);
+    lo -= pad; hi += pad;
+    const lines = cfg.lines.filter(([v]) => v > lo - (hi-lo)*0.2 && v < hi + (hi-lo)*0.2);
+    lines.forEach(([v]) => { lo = Math.min(lo, v-pad*0.3); hi = Math.max(hi, v+pad*0.3); });
+    const W=320, H=120, L=8, R=40, T=14, B=20;
+    const x = i => L + (W-L-R) * (rows.length===1 ? 1 : i/(rows.length-1));
+    const y = v => T + (H-T-B) * (1 - (v-lo)/(hi-lo));
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${key} over the last ${rows.length-1} months">`;
+    lines.forEach(([v,lab]) => {
+      s += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-dasharray="3 3"/>`+
+           `<text x="${L+2}" y="${y(v)-3}" font-size="9" fill="var(--sub)">threshold ${lab}${cfg.unit}</text>`;
+    });
+    s += `<polyline fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round" points="${vals.map((v,i)=>x(i)+','+y(v)).join(' ')}"/>`;
+    vals.forEach((v,i)=>{ s += `<circle cx="${x(i)}" cy="${y(v)}" r="${i===vals.length-1?3.5:2}" fill="${i===vals.length-1?'var(--ink)':'var(--panel)'}" stroke="var(--ink)" stroke-width="1.2"/>`; });
+    const fmt = v => v.toFixed(cfg.dec)+cfg.unit;
+    const iMax = vals.indexOf(Math.max(...vals)), iMin = vals.indexOf(Math.min(...vals));
+    const lab = (i,above) => `<text x="${Math.min(Math.max(x(i),L+14),W-R-14)}" y="${y(vals[i])+(above?-7:14)}" font-size="9.5" font-weight="600" text-anchor="middle" fill="var(--ink)">${fmt(vals[i])}</text>`;
+    s += lab(iMax,true); if(iMin!==iMax) s += lab(iMin,false);
+    if(iMax!==vals.length-1 && iMin!==vals.length-1) s += `<text x="${x(vals.length-1)+7}" y="${y(vals[vals.length-1])+3}" font-size="9.5" font-weight="700" fill="var(--ink)">${fmt(vals[vals.length-1])}</text>`;
+    const step = Math.max(1, Math.round((rows.length-1)/4));
+    rows.forEach((r,i)=>{ if(i%step===0 || i===rows.length-1){
+      const m = parseInt(r[0].split('-')[1],10)-1;
+      s += `<text x="${x(i)}" y="${H-5}" font-size="9" text-anchor="middle" fill="var(--sub)">${MN[m]}${(m===0||i===0)?' ’'+r[0].slice(2,4):''}</text>`; }});
+    s += '</svg>';
+    const ranges = Object.keys(RANGES).map(k=>`<button type="button" data-range="${k}" class="${k===range?'active':''}">${k}</button>`).join('');
+    panel.innerHTML = `<div class="trend-ranges">${ranges}</div>${s}<div class="trend-note">Month-by-month readings; latest point is the live value. Dashed lines mark scoring thresholds.</div>`;
+    panel.querySelectorAll('.trend-ranges button').forEach(b=>b.addEventListener('click',()=>{
+      range = b.dataset.range;
+      Object.keys(INPUTS).forEach(k=>{ if(!document.getElementById('trend'+k).hidden) draw(k); });
+    }));
+  }
+  document.querySelectorAll('.trend-toggle').forEach(btn=>btn.addEventListener('click',()=>{
+    const key = btn.dataset.input, panel = document.getElementById('trend'+key);
+    const open = panel.hidden;
+    panel.hidden = !open;
+    btn.setAttribute('aria-expanded', open);
+    btn.innerHTML = open ? 'Hide trend &#9652;' : 'Show trend &#9662;';
+    if(open) draw(key);
+  }));
+})();
 
 // ---- "What's driving this reading" -- fully generated from the current numbers, ----
 // so it always matches whatever CURRENT_YC/PE/ECY the daily data refresh has set,
