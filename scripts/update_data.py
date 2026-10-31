@@ -24,7 +24,7 @@ Design goals:
 """
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import requests
 
@@ -34,6 +34,7 @@ from scoring import TIER_WORD, composite, tier_for_score
 INDEX_HTML = "index.html"
 UA = {"User-Agent": "Mozilla/5.0 (compatible; JETIndexBot/1.0; +https://jetindx.com)"}
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
+TIER_HOLD_DAYS = 7  # a new tier must persist longer than this before it becomes official
 MULTPL_PE = "https://www.multpl.com/shiller-pe"
 
 
@@ -163,6 +164,13 @@ def main():
     # enough to actually flip the tier letter, not just nudge an input within the same tier.
     old_composite = composite(cur_yc, cur_pe, cur_ecy)
     old_tier = tier_for_score(old_composite)
+    # Debounce state: the official tier only changes after a new raw tier has held > 7 days.
+    st = {}
+    for key in ("CONFIRMED_TIER", "PREV_CONFIRMED_TIER", "PENDING_TIER", "PENDING_SINCE_ISO"):
+        mm = re.search(rf"const {key} = '([^']*)';", html)
+        st[key] = mm.group(1) if mm else None
+    confirmed = st["CONFIRMED_TIER"] or old_tier
+    pending, pending_since = st["PENDING_TIER"] or "", st["PENDING_SINCE_ISO"] or ""
     if score_changed:
         new_current_line = f"const CURRENT_YC = {new_yc}, CURRENT_PE = {new_pe}, CURRENT_ECY = {new_ecy};"
         html = html.replace(m.group(0), new_current_line)
@@ -182,8 +190,19 @@ def main():
     # show today's actual reading rather than whatever text was last hand-written.
     score = composite(new_yc, new_pe, new_ecy)
     tier = tier_for_score(score)
-    # The headline event: did this run just nudge an input, or actually flip the tier letter?
-    tier_changed = score_changed and (tier != old_tier)
+    now_dt = datetime.now(timezone.utc)
+    now_iso = now_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    tier_changed, prev_confirmed = False, st["PREV_CONFIRMED_TIER"] or confirmed
+    if tier == confirmed:
+        pending, pending_since = "", ""          # back in line (or flipped back): clock resets
+    elif tier != pending:
+        pending, pending_since = tier, now_iso   # new candidate tier: start the clock
+    else:
+        held = now_dt - datetime.strptime(pending_since, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        if held > timedelta(days=TIER_HOLD_DAYS):
+            prev_confirmed, confirmed, tier_changed = confirmed, tier, True
+            pending, pending_since = "", ""
+    tier = confirmed  # everything user-facing below uses the official tier
     as_of = datetime.now(timezone.utc).strftime("%B %Y")
     social_desc = (
         f"Current reading: {tier} tier ({TIER_WORD[tier]}), {score:.2f} / 7 as of {as_of}. "
@@ -234,7 +253,11 @@ def main():
         print("[warn] Could not find the tail of the `monthly` array; leaving history untouched.")
 
     # --- Always stamp the "data checked" timestamp on a successful run ---
-    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    for key, val in (("CONFIRMED_TIER", confirmed), ("PREV_CONFIRMED_TIER", prev_confirmed),
+                     ("PENDING_TIER", pending), ("PENDING_SINCE_ISO", pending_since)):
+        html, n = re.subn(rf"const {key} = '[^']*';", f"const {key} = '{val}';", html)
+        if n == 0:
+            print(f"[warn] {key} anchor missing in index.html")
     if "const LAST_CHECKED_ISO" in html:
         html = re.sub(r"const LAST_CHECKED_ISO = '[^']*';", f"const LAST_CHECKED_ISO = '{now_iso}';", html)
     else:
@@ -274,12 +297,10 @@ def main():
 
     print("changed=" + ("true" if changed else "false"))
 
-    # Email subscribers only when the composite score itself moved (an input crossing a
-    # scoring threshold) -- NOT on every raw-input wiggle. Shiller PE now updates daily, so
-    # keying this off raw inputs would email everyone nearly every day, which contradicts the
-    # site's promise of "not a daily check-in, just real changes".
-    if abs(score - old_composite) > 1e-9:
-        send_change_notifications((cur_yc, cur_pe, cur_ecy), (new_yc, new_pe, new_ecy))
+    # Email subscribers only when the OFFICIAL tier changes (a new tier that has held > 7 days),
+    # never on raw-input wiggles or short-lived tier flickers.
+    if tier_changed:
+        send_change_notifications(prev_confirmed, confirmed, (cur_yc, cur_pe, cur_ecy), (new_yc, new_pe, new_ecy))
 
 
 if __name__ == "__main__":

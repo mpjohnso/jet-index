@@ -422,6 +422,13 @@ const LAST_CHANGED_ISO = '2026-10-31T03:47:09Z';
 // was corrected against the real history. Update this only when composite() actually crosses
 // a tier boundary going forward.
 const LAST_TIER_CHANGE_ISO = '2026-05-01T00:00:00Z';
+// Tier-change debounce (managed by scripts/update_data.py): the OFFICIAL tier only changes once a
+// newly computed tier has held for more than 7 days. PENDING_* tracks a candidate tier that has
+// shown up but not yet earned confirmation (empty when the live score agrees with CONFIRMED_TIER).
+const CONFIRMED_TIER = 'E';
+const PREV_CONFIRMED_TIER = 'D';
+const PENDING_TIER = '';
+const PENDING_SINCE_ISO = '';
 const TIER_COLOR = {S:'#e0473d',A:'#ef8f1e',B:'#f3cf3d',C:'#4fae59',D:'#63b8de',E:'#2f6fb0',F:'#c92f86'};
 const TIER_TEXT  = {S:'#fff',A:'#fff',B:'#2b2200',C:'#fff',D:'#0b2733',E:'#fff',F:'#fff'};
 const ORDER = ['F','E','D','C','B','A','S']; // worst -> best, left -> right
@@ -503,7 +510,7 @@ const CURRENT_YC = 0.34, CURRENT_PE = 40.13, CURRENT_ECY = 0.89;
 // momentum trend below. Bootstrap: equal to CURRENT_* until the next real change.
 const PREV_YC = 0.34, PREV_PE = 40.58, PREV_ECY = 1.01;
 const heroScore = composite(CURRENT_YC, CURRENT_PE, CURRENT_ECY);
-const heroTier = nearestTier(heroScore);
+const heroTier = CONFIRMED_TIER;  // official tier, debounced 7 days (see CONFIRMED_TIER above)
 document.getElementById('heroScoreText').textContent = `weighted score ${heroScore.toFixed(2)} / 7`;
 
 setBrandedChip('heroChip', heroTier); renderMeterContinuous('heroMeter', heroScore);
@@ -548,13 +555,18 @@ function formatChecked(iso){
 // moving enough to flip the overall tier letter (the actually significant event).
 (function(){
   const el = document.getElementById('scoreChanged');
-  const prevTier = nearestTier(composite(PREV_YC, PREV_PE, PREV_ECY));
-  const tierJustChanged = LAST_TIER_CHANGE_ISO === LAST_CHANGED_ISO && prevTier !== heroTier;
-  if(tierJustChanged){
-    el.innerHTML = `<span class="dot" style="background:${TIER_COLOR[heroTier]}"></span><b>Tier changed: ${prevTier} &rarr; ${heroTier}</b> on ${formatChecked(LAST_TIER_CHANGE_ISO)}`;
+  const recentDays = (new Date(LAST_CHECKED_ISO) - new Date(LAST_TIER_CHANGE_ISO)) / 86400000;
+  let html;
+  if(recentDays <= 30 && PREV_CONFIRMED_TIER !== heroTier){
+    html = `<span class="dot" style="background:${TIER_COLOR[heroTier]}"></span><b>Tier changed: ${PREV_CONFIRMED_TIER} &rarr; ${heroTier}</b> on ${formatChecked(LAST_TIER_CHANGE_ISO)}`;
   } else {
-    el.innerHTML = `<span class="dot" style="background:var(--sub)"></span>Inputs updated ${formatChecked(LAST_CHANGED_ISO)} &mdash; still ${heroTier} tier`;
+    html = `<span class="dot" style="background:var(--sub)"></span>Inputs updated ${formatChecked(LAST_CHANGED_ISO)} &mdash; still ${heroTier} tier`;
   }
+  if(PENDING_TIER && PENDING_TIER !== heroTier){
+    const daysHeld = Math.max(0, Math.floor((new Date(LAST_CHECKED_ISO) - new Date(PENDING_SINCE_ISO)) / 86400000));
+    html += `<br><span style="color:var(--sub)">Pending: the live score now points to ${PENDING_TIER} tier (day ${daysHeld} of 7). The tier changes only if it holds for more than a week.</span>`;
+  }
+  el.innerHTML = html;
 })();
 document.getElementById('dataCheckedFooter').textContent = `Data last checked ${formatChecked(LAST_CHECKED_ISO)}`;
 
@@ -1059,7 +1071,7 @@ function tierRuns(){
   const runs = [];
   let curTier = null, curStart = 0;
   monthly.forEach((row,i)=>{
-    const t = nearestTier(composite(row[1],row[2],row[3]));
+    const t = (i===monthly.length-1) ? heroTier : nearestTier(composite(row[1],row[2],row[3]));
     if(t !== curTier){
       if(curTier !== null) runs.push({tier:curTier, start:curStart, len:i-curStart});
       curTier = t; curStart = i;

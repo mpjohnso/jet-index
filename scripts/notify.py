@@ -89,8 +89,8 @@ def _direction_cell(old_v, new_v, higher_is_better):
     return f'<span style="color:{color}; font-weight:700;">{arrow} {word}</span>'
 
 
-def send_change_notifications(old, new):
-    """old/new are (yc, pe, ecy) tuples. Emails every subscriber about the change."""
+def send_change_notifications(old_tier, new_tier, old, new):
+    """Emails every subscriber that the official tier changed (old_tier -> new_tier)."""
     api_key = os.environ.get("RESEND_API_KEY")
     if not api_key:
         print("[info] RESEND_API_KEY not set; skipping notifications.")
@@ -103,11 +103,7 @@ def send_change_notifications(old, new):
 
     old_yc, old_pe, old_ecy = old
     new_yc, new_pe, new_ecy = new
-
-    old_score = composite(old_yc, old_pe, old_ecy)
     new_score = composite(new_yc, new_pe, new_ecy)
-    old_tier = tier_for_score(old_score)
-    new_tier = tier_for_score(new_score)
     tier_changed = old_tier != new_tier
 
     def _chip_cell(tier, score, caption):
@@ -121,7 +117,7 @@ def send_change_notifications(old, new):
                           font-size:30px; text-align:center; vertical-align:middle;">{tier}</td></tr>
         </table>
         <div style="font-size:11.5px; color:#71757d; margin-top:8px; text-align:center;">{caption}</div>
-        <div style="font-size:12.5px; color:#16181c; font-weight:700; text-align:center;">{score:.2f} / 7</div>
+        <div style="font-size:12.5px; color:#16181c; font-weight:700; text-align:center;">{f'{score:.2f} / 7' if score is not None else '&nbsp;'}</div>
         """
 
     if tier_changed:
@@ -132,7 +128,7 @@ def send_change_notifications(old, new):
         chip_block = f"""
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
         <tr>
-          <td width="42%" align="center" style="vertical-align:top;">{_chip_cell(old_tier, old_score, 'Before')}</td>
+          <td width="42%" align="center" style="vertical-align:top;">{_chip_cell(old_tier, None, 'Before')}</td>
           <td width="16%" align="center" style="vertical-align:middle; font-size:22px; color:#71757d;">&rarr;</td>
           <td width="42%" align="center" style="vertical-align:top;">{_chip_cell(new_tier, new_score, 'Now')}</td>
         </tr>

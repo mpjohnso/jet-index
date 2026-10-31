@@ -141,6 +141,9 @@ def main():
 
     score = composite(yc, pe, ecy)
     tier = tier_for_score(score)
+    mc = re.search(r"const CONFIRMED_TIER = '([A-Z])';", html)
+    if mc:
+        tier = mc.group(1)  # official (debounced) tier
 
     pe_pct = None
     if pe_history:
