@@ -9,14 +9,14 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="JET Index">
 <meta property="og:title" content="JET Index &mdash; U.S. market valuation gauge">
-<meta property="og:description" content="Current reading: E tier (poor), 2.25 / 7 as of October 2026. A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield.">
+<meta property="og:description" content="Current reading: E tier (poor), 1.88 / 7 as of October 2026. A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield.">
 <meta property="og:url" content="https://jetindx.com/">
 <meta property="og:image" content="https://jetindx.com/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="JET Index &mdash; U.S. market valuation gauge">
-<meta name="twitter:description" content="Current reading: E tier (poor), 2.25 / 7 as of October 2026. A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield.">
+<meta name="twitter:description" content="Current reading: E tier (poor), 1.88 / 7 as of October 2026. A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield.">
 <meta name="twitter:image" content="https://jetindx.com/og-image.png">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -336,19 +336,19 @@
     <svg class="card-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
     <div class="metric-top">
       <div class="metric-name">Shiller PE (CAPE)</div>
-      <div class="metric-value-wrap"><span class="metric-value mono">41.1</span><span class="tier-chip" id="chipPE"></span></div>
+      <div class="metric-value-wrap"><span class="metric-value mono">40.1</span><span class="tier-chip" id="chipPE"></span></div>
     </div>
     <div class="momentum" id="momPE"></div>
     <div class="momentum since-update" id="sincePE"></div>
     <div class="meter" id="meterPE"></div>
-    <div class="metric-desc">Price over 10-year real earnings. Past the F-tier line of 40 &mdash; second-highest reading on record.</div>
+    <div class="metric-desc">Price over 10-year real earnings. Past the F-tier line of 40 &mdash; a level seen only in 1999&ndash;2000 until this year.</div>
   </div>
 
   <div class="card metric-card">
     <svg class="card-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
     <div class="metric-top">
       <div class="metric-name">Excess CAPE Yield</div>
-      <div class="metric-value-wrap"><span class="metric-value mono">1.0%</span><span class="tier-chip" id="chipEY"></span></div>
+      <div class="metric-value-wrap"><span class="metric-value mono">0.9%</span><span class="tier-chip" id="chipEY"></span></div>
     </div>
     <div class="momentum" id="momEY"></div>
     <div class="momentum since-update" id="sinceEY"></div>
@@ -414,8 +414,8 @@
 </div>
 
 <script>
-const LAST_CHECKED_ISO = '2026-10-30T17:04:42Z';
-const LAST_CHANGED_ISO = '2026-10-02T11:38:36Z';
+const LAST_CHECKED_ISO = '2026-10-31T03:47:09Z';
+const LAST_CHANGED_ISO = '2026-10-31T03:47:09Z';
 // The composite actually moved D -> E in May 2026 per the monthly backtest data (monthly
 // resolution only, so this is pinned to the 1st of that month, not an exact day) -- NOT on
 // LAST_CHANGED_ISO's date, which was a stale bootstrap placeholder left over from before this
@@ -497,7 +497,7 @@ function continuousMetricScore(value, breakpoints, descending){
 }
 
 // Current reading, computed live from the real current inputs (same values as the metric cards)
-const CURRENT_YC = 0.34, CURRENT_PE = 40.58, CURRENT_ECY = 1.01;
+const CURRENT_YC = 0.34, CURRENT_PE = 40.13, CURRENT_ECY = 0.89;
 // What each input was immediately before the most recent change -- lets the page show
 // whether that specific input moved favorably or unfavorably, independent of the 3-month
 // momentum trend below. Bootstrap: equal to CURRENT_* until the next real change.
@@ -587,9 +587,11 @@ document.getElementById('notifyForm').addEventListener('submit', function(e){
       statusEl.className = 'notify-status err';
     });
 });
-setChip('chipYC','D'); renderMeterContinuous('meterYC', continuousMetricScore(CURRENT_YC, [-1,0,0.5,1.8,2.3,2.5], false));
-setChip('chipPE','F'); renderMeterContinuous('meterPE', continuousMetricScore(CURRENT_PE, [10,16,22,28,34,40], true));
-setChip('chipEY','D'); renderMeterContinuous('meterEY', continuousMetricScore(CURRENT_ECY, [0,1,2.1,4.1,7,9], false));
+// Chip letters come from the same scoring functions as the composite (score 1=F ... 7=S), so
+// they can never drift out of sync with the numbers the daily refresh writes into CURRENT_*.
+setChip('chipYC', ORDER[scoreYC(CURRENT_YC)-1]); renderMeterContinuous('meterYC', continuousMetricScore(CURRENT_YC, [-1,0,0.5,1.8,2.3,2.5], false));
+setChip('chipPE', ORDER[scorePE(CURRENT_PE)-1]); renderMeterContinuous('meterPE', continuousMetricScore(CURRENT_PE, [10,16,22,28,34,40], true));
+setChip('chipEY', ORDER[scoreEY(CURRENT_ECY)-1]); renderMeterContinuous('meterEY', continuousMetricScore(CURRENT_ECY, [0,1,2.1,4.1,7,9], false));
 
 const TIER_DESC = {
   S:'Rare bargain conditions — the strongest historical forward returns.',
@@ -1020,7 +1022,7 @@ const monthly = [
   ['2025-10',0.54,39.21,1.67,1.68],['2025-11',0.54,39.15,1.63,1.77],['2025-12',0.64,39.58,1.59,1.76],
   ['2026-01',0.67,39.64,1.53,1.67],['2026-02',0.66,39.01,1.69,1.68],['2026-03',0.54,37.03,1.77,1.79],
   ['2026-04',0.52,38.14,1.66,1.71],['2026-05',0.48,40.27,1.39,1.62],['2026-06',0.36,40.15,1.34,1.53],
-  ['2026-07',0.38,40.01,1.23,1.59],['2026-08',0.46,41.12,1.07,1.64],['2026-09',0.46,40.58,1.01,1.46],['2026-10',0.34,40.58,1.01,1.43]
+  ['2026-07',0.38,40.01,1.23,1.59],['2026-08',0.46,41.12,1.07,1.64],['2026-09',0.46,40.58,1.01,1.46],['2026-10',0.34,40.13,0.89,1.49]
 ];
 // Rarity: how many of the real backtested months (monthly.length, computed below as
 // totalMonths) landed in each tier, so a viewer can see at a glance whether today's

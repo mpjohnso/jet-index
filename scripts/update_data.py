@@ -6,8 +6,12 @@ Pulls the latest public data for the three inputs and the credit-stress
 overlay, and rewrites the relevant numbers in index.html:
   - 2s10s Yield Curve Spread   -> FRED series T10Y2YM (no API key needed)
   - Baa-10Y credit spread      -> FRED series BAA10Y   (no API key needed)
-  - Shiller PE (CAPE) and
-    Excess CAPE Yield          -> Robert Shiller's own published dataset
+  - Shiller PE (CAPE)          -> multpl.com/shiller-pe (updated daily; Shiller's own
+                                  public Excel file on Yale's site stopped in Sept 2023)
+  - Excess CAPE Yield          -> computed here: 100/CAPE minus the real 10Y Treasury yield,
+                                  where real = FRED DGS10 minus trailing 10-year annualized
+                                  CPI inflation (FRED CPIAUCSL). Back-tested against the
+                                  site's own 2026 values: matches to within ~0.01-0.02.
 
 Design goals:
   - Never crash the whole run because one source is temporarily down.
@@ -18,7 +22,6 @@ Design goals:
   - Always stamp "last checked", even on a day nothing actually changed,
     so the dashboard visibly proves the automation is alive.
 """
-import io
 import re
 import sys
 from datetime import datetime, timezone
@@ -31,7 +34,7 @@ from scoring import TIER_WORD, composite, tier_for_score
 INDEX_HTML = "index.html"
 UA = {"User-Agent": "Mozilla/5.0 (compatible; JETIndexBot/1.0; +https://jetindx.com)"}
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
-SHILLER_XLS = "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
+MULTPL_PE = "https://www.multpl.com/shiller-pe"
 
 
 def fetch_fred_latest(series):
@@ -56,49 +59,80 @@ def fetch_fred_latest(series):
         return None
 
 
-def fetch_shiller_cape_ecy():
-    """Return (cape, ecy) from Shiller's ie_data.xls, or (None, None)."""
+def fetch_multpl_pe():
+    """Return the current Shiller PE (CAPE) from multpl.com, or None.
+
+    multpl updates this daily from Shiller's data plus the live S&P 500 price. Parsed from the
+    text of the page's "current" block, with the <meta> description as a fallback, and
+    sanity-checked so a layout change can't write garbage into the dashboard.
+    """
     try:
-        import pandas as pd
-
-        r = requests.get(SHILLER_XLS, headers=UA, timeout=60)
+        r = requests.get(MULTPL_PE, headers=UA, timeout=30)
         r.raise_for_status()
-        raw = pd.read_excel(io.BytesIO(r.content), sheet_name="Data", header=None)
-
-        # Find the header row: the row whose first cell is literally "Date".
-        header_row_idx = None
-        for i in range(min(15, len(raw))):
-            if str(raw.iloc[i, 0]).strip().lower() == "date":
-                header_row_idx = i
-                break
-        if header_row_idx is None:
-            print("[warn] Could not locate Shiller header row")
-            return None, None
-
-        headers = [str(c).strip() for c in raw.iloc[header_row_idx]]
-        data = raw.iloc[header_row_idx + 1:].copy()
-        data.columns = headers
-
-        cape_col = next((c for c in headers if c.strip().upper() == "CAPE"), None)
-        ecy_col = next(
-            (c for c in headers if "excess cape yield" in c.strip().lower() or c.strip().upper() == "ECY"),
-            None,
-        )
-        if not cape_col or not ecy_col:
-            print(f"[warn] Could not find CAPE/ECY columns in {headers}")
-            return None, None
-
-        cape_series = pd.to_numeric(data[cape_col], errors="coerce").dropna()
-        ecy_series = pd.to_numeric(data[ecy_col], errors="coerce").dropna()
-        if cape_series.empty or ecy_series.empty:
-            return None, None
-
-        return float(cape_series.iloc[-1]), float(ecy_series.iloc[-1]) * (
-            100 if ecy_series.iloc[-1] < 1 else 1
-        )
+        html = r.text
+        m = re.search(r'id="current"[^>]*>(.{0,600})', html, re.S)
+        text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", m.group(1))) if m else ""
+        mm = re.search(r"Current Shiller PE Ratio\s*:?\s*([0-9]+(?:\.[0-9]+)?)", text)
+        if not mm:
+            mm = re.search(r"Current Shiller PE Ratio is ([0-9]+(?:\.[0-9]+)?)", html)
+        if not mm:
+            print("[warn] Could not find the current Shiller PE on multpl.com")
+            return None
+        val = float(mm.group(1))
+        if not (5 <= val <= 80):
+            print(f"[warn] multpl Shiller PE {val} is outside the sane range 5-80; ignoring")
+            return None
+        return val
     except Exception as e:
-        print(f"[warn] Shiller fetch/parse failed: {e}")
-        return None, None
+        print(f"[warn] multpl Shiller PE fetch failed: {e}")
+        return None
+
+
+def fetch_fred_rows(series):
+    """Return [(date_str, value), ...] for a FRED series, dropping missing values."""
+    r = requests.get(FRED_CSV.format(series=series), headers=UA, timeout=30)
+    r.raise_for_status()
+    rows = []
+    for line in r.text.strip().splitlines()[1:]:
+        parts = line.split(",")
+        if len(parts) >= 2 and parts[1].strip() not in ("", "."):
+            rows.append((parts[0].strip(), float(parts[1])))
+    return rows
+
+
+def compute_ecy(cape):
+    """Excess CAPE Yield = earnings yield (100/CAPE) - real 10Y Treasury yield, in percent.
+
+    Real 10Y yield = latest daily 10Y Treasury (DGS10) minus the trailing 10-year annualized
+    CPI inflation rate (latest CPIAUCSL vs. the same month ten years earlier). This is the
+    construction that reproduces the dashboard's own historical ECY values; TIPS yields and
+    breakeven-based variants do NOT (they miss by ~1 point). Returns None on any problem.
+    """
+    if cape is None:
+        return None
+    try:
+        dgs10 = fetch_fred_rows("DGS10")
+        cpi = dict(fetch_fred_rows("CPIAUCSL"))
+        if not dgs10 or not cpi:
+            return None
+        latest_cpi_date = max(cpi)
+        y, mth, _ = latest_cpi_date.split("-")
+        then = cpi.get(f"{int(y) - 10}-{mth}-01")
+        if not then:
+            print("[warn] No CPI value ten years before", latest_cpi_date)
+            return None
+        inflation = ((cpi[latest_cpi_date] / then) ** (1 / 10) - 1) * 100
+        real_yield = dgs10[-1][1] - inflation
+        ecy = 100.0 / cape - real_yield
+        if not (-6 <= ecy <= 12):
+            print(f"[warn] Computed ECY {ecy:.2f} is outside the sane range; ignoring")
+            return None
+        print(f"[info] ECY: 100/{cape} = {100.0 / cape:.3f}; real 10Y = {dgs10[-1][1]} (DGS10 {dgs10[-1][0]}) "
+              f"- {inflation:.3f} (10y CPI to {latest_cpi_date}) = {real_yield:.3f}; ECY = {ecy:.2f}")
+        return ecy
+    except Exception as e:
+        print(f"[warn] ECY computation failed: {e}")
+        return None
 
 
 def main():
@@ -107,7 +141,8 @@ def main():
 
     yc = fetch_fred_latest("T10Y2YM")
     credit = fetch_fred_latest("BAA10Y")
-    cape, ecy = fetch_shiller_cape_ecy()
+    cape = fetch_multpl_pe()
+    ecy = compute_ecy(cape)
 
     print(f"Fetched: yc={yc} credit={credit} cape={cape} ecy={ecy}")
 
@@ -126,7 +161,8 @@ def main():
     score_changed = (new_yc, new_pe, new_ecy) != (cur_yc, cur_pe, cur_ecy)
     # Captured before any overwrite, so we can tell later whether this run's change was big
     # enough to actually flip the tier letter, not just nudge an input within the same tier.
-    old_tier = tier_for_score(composite(cur_yc, cur_pe, cur_ecy))
+    old_composite = composite(cur_yc, cur_pe, cur_ecy)
+    old_tier = tier_for_score(old_composite)
     if score_changed:
         new_current_line = f"const CURRENT_YC = {new_yc}, CURRENT_PE = {new_pe}, CURRENT_ECY = {new_ecy};"
         html = html.replace(m.group(0), new_current_line)
@@ -238,7 +274,11 @@ def main():
 
     print("changed=" + ("true" if changed else "false"))
 
-    if score_changed:
+    # Email subscribers only when the composite score itself moved (an input crossing a
+    # scoring threshold) -- NOT on every raw-input wiggle. Shiller PE now updates daily, so
+    # keying this off raw inputs would email everyone nearly every day, which contradicts the
+    # site's promise of "not a daily check-in, just real changes".
+    if abs(score - old_composite) > 1e-9:
         send_change_notifications((cur_yc, cur_pe, cur_ecy), (new_yc, new_pe, new_ecy))
 
 
