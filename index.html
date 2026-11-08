@@ -100,6 +100,7 @@
   .share-menu-item:hover{background:var(--bg);}
 
   .meter{position:relative; margin-top:18px;}
+  .meter-countdown{font-size:10px; color:var(--sub); text-align:right; margin-top:3px; font-style:italic;}
   .meter-live{position:absolute; top:-21px; display:flex; align-items:center; gap:3px; font-size:8px; font-weight:700; letter-spacing:.08em; color:var(--ink); background:var(--panel); border:1px solid var(--ink); border-radius:8px; padding:1px 5px 1px 4px; line-height:1.2; white-space:nowrap;}
   .meter-live i{width:5px; height:5px; border-radius:50%; background:#e0473d; animation:livepulse 1.8s ease-in-out infinite;}
   @keyframes livepulse{0%,100%{opacity:1} 50%{opacity:.35}}
@@ -473,7 +474,8 @@ function liveTag(pct, extra){
 function pendingCountdown(){
   if(!PENDING_TIER || PENDING_TIER === CONFIRMED_TIER) return '';
   const left = Math.ceil((new Date(PENDING_SINCE_ISO).getTime() + 14*86400000 - Date.now()) / 86400000);
-  return left > 0 ? `${PENDING_TIER} official in ${left}d` : `${PENDING_TIER} confirming`;
+  const txt = left > 0 ? `Becomes ${PENDING_TIER} tier in ${left} day${left===1?'':'s'} if it holds` : `${PENDING_TIER} tier confirming at next update`;
+  return `<div class="meter-countdown">${txt}</div>`;
 }
 function renderMeter(containerId, letter){
   const el = document.getElementById(containerId);
@@ -498,8 +500,8 @@ function renderMeterContinuous(containerId, score){
   const pct = ((score-0.5)/7)*100;
   let segs = ORDER.map(l=>`<div class="seg" style="background:${TIER_COLOR[l]}"></div>`).join('');
   el.innerHTML = `<div class="meter-track">${segs}</div>
-    <div class="meter-marker" style="left:${pct}%"></div>${liveTag(pct, containerId==='heroMeter' ? pendingCountdown() : '')}
-    <div class="meter-scale"><span>F</span><span>E</span><span>D</span><span>C</span><span>B</span><span>A</span><span>S</span></div>`;
+    <div class="meter-marker" style="left:${pct}%"></div>${liveTag(pct)}
+    <div class="meter-scale"><span>F</span><span>E</span><span>D</span><span>C</span><span>B</span><span>A</span><span>S</span></div>${containerId==='heroMeter' ? pendingCountdown() : ''}`;
 }
 function nearestTier(score){ return ORDER[Math.max(0,Math.min(6,Math.round(score)-1))]; }
 
