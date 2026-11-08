@@ -100,9 +100,6 @@
   .share-menu-item:hover{background:var(--bg);}
 
   .meter{position:relative; margin-top:18px;}
-  .meter-official{position:absolute; top:calc(100% + 2px); transform:translateX(-50%); text-align:center; white-space:nowrap;}
-  .meter-official::before{content:''; display:block; width:0; height:0; margin:0 auto; border-left:4px solid transparent; border-right:4px solid transparent; border-bottom:5px solid var(--ink);}
-  .meter-official span{display:inline-block; font-size:8.5px; font-weight:700; letter-spacing:.06em; background:var(--ink); color:#fff; border-radius:8px; padding:2px 8px; line-height:1.2;}
   .meter-live{position:absolute; top:-21px; display:flex; align-items:center; gap:3px; font-size:8px; font-weight:700; letter-spacing:.08em; color:var(--ink); background:var(--panel); border:1px solid var(--ink); border-radius:8px; padding:1px 5px 1px 4px; line-height:1.2; white-space:nowrap;}
   .meter-live i{width:5px; height:5px; border-radius:50%; background:#e0473d; animation:livepulse 1.8s ease-in-out infinite;}
   @keyframes livepulse{0%,100%{opacity:1} 50%{opacity:.35}}
@@ -468,9 +465,15 @@ function setBrandedChip(id, letter){
 
 // Small "LIVE" pill above the marker so it's clear the marker is today's live reading.
 // Anchored to the marker but nudged inward near either end so it never clips.
-function liveTag(pct){
-  const shift = pct < 9 ? '0%' : pct > 91 ? '-100%' : '-50%';
-  return `<div class="meter-live" style="left:${pct}%; transform:translateX(${shift})"><i></i>LIVE</div>`;
+function liveTag(pct, extra){
+  const shift = pct < 14 ? '0%' : pct > 86 ? '-100%' : '-50%';
+  return `<div class="meter-live" style="left:${pct}%; transform:translateX(${shift})"><i></i>LIVE${extra ? ' &middot; ' + extra : ''}</div>`;
+}
+// Countdown for the hero marker while a tier change is pending (see CONFIRMED_TIER above).
+function pendingCountdown(){
+  if(!PENDING_TIER || PENDING_TIER === CONFIRMED_TIER) return '';
+  const left = Math.ceil((new Date(PENDING_SINCE_ISO).getTime() + 14*86400000 - Date.now()) / 86400000);
+  return left > 0 ? `${PENDING_TIER} official in ${left}d` : `${PENDING_TIER} confirming`;
 }
 function renderMeter(containerId, letter){
   const el = document.getElementById(containerId);
@@ -495,7 +498,7 @@ function renderMeterContinuous(containerId, score){
   const pct = ((score-0.5)/7)*100;
   let segs = ORDER.map(l=>`<div class="seg" style="background:${TIER_COLOR[l]}"></div>`).join('');
   el.innerHTML = `<div class="meter-track">${segs}</div>
-    <div class="meter-marker" style="left:${pct}%"></div>${liveTag(pct)}
+    <div class="meter-marker" style="left:${pct}%"></div>${liveTag(pct, containerId==='heroMeter' ? pendingCountdown() : '')}
     <div class="meter-scale"><span>F</span><span>E</span><span>D</span><span>C</span><span>B</span><span>A</span><span>S</span></div>`;
 }
 function nearestTier(score){ return ORDER[Math.max(0,Math.min(6,Math.round(score)-1))]; }
@@ -592,11 +595,7 @@ function formatChecked(iso){
     const since = new Date(PENDING_SINCE_ISO);
     const fmtD = d => d.toLocaleDateString('en-US', {month:'short', day:'numeric', timeZone:'America/Chicago'});
     const earliest = new Date(since.getTime() + 14*86400000);
-    html += `<div style="flex-basis:100%"><b>Pending change to ${PENDING_TIER}:</b> the live score (${heroScore.toFixed(2)}) has pointed to ${PENDING_TIER} tier since ${fmtD(since)}. The official tier stays ${heroTier} (tagged below the bar) unless that holds for more than 14 days &mdash; earliest ${fmtD(earliest)}. The black marker is the live score.</div>`;
-    const k = ORDER.indexOf(heroTier);
-    const hm = document.getElementById('heroMeter');
-    hm.style.marginBottom = '26px';
-    hm.insertAdjacentHTML('beforeend', `<div class="meter-official" style="left:${(k+0.5)/7*100}%"><span>OFFICIAL TIER: ${heroTier}</span></div>`);
+    html += `<div style="flex-basis:100%"><b>Pending change to ${PENDING_TIER}:</b> the live score (${heroScore.toFixed(2)}) has pointed to ${PENDING_TIER} tier since ${fmtD(since)}. The official tier stays ${heroTier} unless that holds for more than 14 days &mdash; earliest ${fmtD(earliest)}. The black marker is the live score.</div>`;
   }
   el.innerHTML = html;
 })();
