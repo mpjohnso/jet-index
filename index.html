@@ -72,7 +72,7 @@
   .hero .verdict b{font-weight:700;}
   .hero .score{font-size:12px; color:var(--sub); margin-top:2px;}
   .hero-streak{font-size:12px; color:var(--sub); line-height:1.45; margin:2px 0 0;}
-  .score-changed{display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--sub); margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);}
+  .score-changed{display:flex; flex-wrap:wrap; row-gap:6px; align-items:center; gap:6px; font-size:10.5px; color:var(--sub); margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);}
   .score-changed .dot{width:6px; height:6px; border-radius:50%; background:var(--favorable); flex:none;}
   .data-checked-footer{text-align:center; font-size:10px; color:var(--sub); opacity:0.65; margin-top:6px;}
   .hero-actions-caption{font-size:11.5px; color:var(--sub); line-height:1.45; margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);}
@@ -576,8 +576,13 @@ function formatChecked(iso){
     html = `<span class="dot" style="background:var(--sub)"></span>Inputs updated ${formatChecked(LAST_CHANGED_ISO)} &mdash; still ${heroTier} tier`;
   }
   if(PENDING_TIER && PENDING_TIER !== heroTier){
-    const daysHeld = Math.max(0, Math.floor((new Date(LAST_CHECKED_ISO) - new Date(PENDING_SINCE_ISO)) / 86400000));
-    html += `<br><span style="color:var(--sub)">Pending: the live score now points to ${PENDING_TIER} tier (day ${daysHeld} of 7). The tier changes only if it holds for more than a week.</span>`;
+    const since = new Date(PENDING_SINCE_ISO);
+    const fmtD = d => d.toLocaleDateString('en-US', {month:'short', day:'numeric', timeZone:'America/Chicago'});
+    const earliest = new Date(since.getTime() + 7*86400000);
+    html += `<div style="flex-basis:100%"><b>Pending change to ${PENDING_TIER}:</b> the live score (${heroScore.toFixed(2)}) has pointed to ${PENDING_TIER} tier since ${fmtD(since)}. The official tier stays ${heroTier} (outlined on the bar) unless that holds for more than 7 days &mdash; earliest ${fmtD(earliest)}. The black marker is the live score.</div>`;
+    const segs = document.querySelectorAll('#heroMeter .seg');
+    const k = ORDER.indexOf(heroTier);
+    if(segs[k]) segs[k].style.boxShadow = 'inset 0 0 0 3px var(--ink)';
   }
   el.innerHTML = html;
 })();
