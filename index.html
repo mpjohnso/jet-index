@@ -436,7 +436,7 @@ const LAST_CHANGED_ISO = '2026-11-07T16:55:55Z';
 // a tier boundary going forward.
 const LAST_TIER_CHANGE_ISO = '2026-05-01T00:00:00Z';
 // Tier-change debounce (managed by scripts/update_data.py): the OFFICIAL tier only changes once a
-// newly computed tier has held for more than 7 days. PENDING_* tracks a candidate tier that has
+// newly computed tier has held for more than 14 days. PENDING_* tracks a candidate tier that has
 // shown up but not yet earned confirmation (empty when the live score agrees with CONFIRMED_TIER).
 const CONFIRMED_TIER = 'E';
 const PREV_CONFIRMED_TIER = 'D';
@@ -523,7 +523,7 @@ const CURRENT_YC = 0.39, CURRENT_PE = 38.91, CURRENT_ECY = 1.11;
 // momentum trend below. Bootstrap: equal to CURRENT_* until the next real change.
 const PREV_YC = 0.39, PREV_PE = 38.79, PREV_ECY = 1.06;
 const heroScore = composite(CURRENT_YC, CURRENT_PE, CURRENT_ECY);
-const heroTier = CONFIRMED_TIER;  // official tier, debounced 7 days (see CONFIRMED_TIER above)
+const heroTier = CONFIRMED_TIER;  // official tier, debounced 14 days (see CONFIRMED_TIER above)
 document.getElementById('heroScoreText').textContent = `weighted score ${heroScore.toFixed(2)} / 7`;
 
 setBrandedChip('heroChip', heroTier); renderMeterContinuous('heroMeter', heroScore);
@@ -578,8 +578,8 @@ function formatChecked(iso){
   if(PENDING_TIER && PENDING_TIER !== heroTier){
     const since = new Date(PENDING_SINCE_ISO);
     const fmtD = d => d.toLocaleDateString('en-US', {month:'short', day:'numeric', timeZone:'America/Chicago'});
-    const earliest = new Date(since.getTime() + 7*86400000);
-    html += `<div style="flex-basis:100%"><b>Pending change to ${PENDING_TIER}:</b> the live score (${heroScore.toFixed(2)}) has pointed to ${PENDING_TIER} tier since ${fmtD(since)}. The official tier stays ${heroTier} (outlined on the bar) unless that holds for more than 7 days &mdash; earliest ${fmtD(earliest)}. The black marker is the live score.</div>`;
+    const earliest = new Date(since.getTime() + 14*86400000);
+    html += `<div style="flex-basis:100%"><b>Pending change to ${PENDING_TIER}:</b> the live score (${heroScore.toFixed(2)}) has pointed to ${PENDING_TIER} tier since ${fmtD(since)}. The official tier stays ${heroTier} (outlined on the bar) unless that holds for more than 14 days &mdash; earliest ${fmtD(earliest)}. The black marker is the live score.</div>`;
     const segs = document.querySelectorAll('#heroMeter .seg');
     const k = ORDER.indexOf(heroTier);
     if(segs[k]) segs[k].style.boxShadow = 'inset 0 0 0 3px var(--ink)';

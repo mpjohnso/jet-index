@@ -34,7 +34,7 @@ from scoring import TIER_WORD, composite, tier_for_score
 INDEX_HTML = "index.html"
 UA = {"User-Agent": "Mozilla/5.0 (compatible; JETIndexBot/1.0; +https://jetindx.com)"}
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
-TIER_HOLD_DAYS = 7  # a new tier must persist longer than this before it becomes official
+TIER_HOLD_DAYS = 14  # a new tier must persist longer than this before it becomes official
 MULTPL_PE = "https://www.multpl.com/shiller-pe"
 
 
@@ -164,7 +164,7 @@ def main():
     # enough to actually flip the tier letter, not just nudge an input within the same tier.
     old_composite = composite(cur_yc, cur_pe, cur_ecy)
     old_tier = tier_for_score(old_composite)
-    # Debounce state: the official tier only changes after a new raw tier has held > 7 days.
+    # Debounce state: the official tier only changes after a new raw tier has held > 14 days.
     st = {}
     for key in ("CONFIRMED_TIER", "PREV_CONFIRMED_TIER", "PENDING_TIER", "PENDING_SINCE_ISO"):
         mm = re.search(rf"const {key} = '([^']*)';", html)
@@ -297,7 +297,7 @@ def main():
 
     print("changed=" + ("true" if changed else "false"))
 
-    # Email subscribers only when the OFFICIAL tier changes (a new tier that has held > 7 days),
+    # Email subscribers only when the OFFICIAL tier changes (a new tier that has held > 14 days),
     # never on raw-input wiggles or short-lived tier flickers.
     if tier_changed:
         send_change_notifications(prev_confirmed, confirmed, (cur_yc, cur_pe, cur_ecy), (new_yc, new_pe, new_ecy))
