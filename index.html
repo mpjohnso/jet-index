@@ -101,6 +101,7 @@
   .share-menu-item:hover{background:var(--bg);}
 
   .meter{position:relative; margin-top:18px;}
+  .meter-asof{font-size:10px; color:var(--sub); margin-top:3px;}
   .meter-countdown{font-size:10px; color:var(--sub); text-align:left; margin-top:3px; font-style:italic;}
   .meter-live{position:absolute; top:-21px; display:flex; align-items:center; gap:3px; font-size:8px; font-weight:700; letter-spacing:.08em; color:var(--ink); background:var(--panel); border:1px solid var(--ink); border-radius:8px; padding:1px 5px 1px 4px; line-height:1.2; white-space:nowrap;}
   .meter-live i{width:5px; height:5px; border-radius:50%; background:#e0473d; animation:livepulse 1.8s ease-in-out infinite;}
@@ -444,6 +445,10 @@ const LAST_TIER_CHANGE_ISO = '2026-05-01T00:00:00Z';
 // Tier-change debounce (managed by scripts/update_data.py): the OFFICIAL tier only changes once a
 // newly computed tier has held for more than 14 days. PENDING_* tracks a candidate tier that has
 // shown up but not yet earned confirmation (empty when the live score agrees with CONFIRMED_TIER).
+// "As of" labels for each input's live reading (written by scripts/update_data.py).
+const ASOF_YC = 'Oct 2026 monthly avg';
+const ASOF_PE = 'Nov 6 close';
+const ASOF_ECY = 'Nov 5';
 const CONFIRMED_TIER = 'E';
 const PREV_CONFIRMED_TIER = 'D';
 const PENDING_TIER = 'D';
@@ -472,6 +477,10 @@ function liveTag(pct, extra){
   return `<div class="meter-live" style="left:${pct}%; transform:translateX(${shift})"><i></i>LIVE${extra ? ' &middot; ' + extra : ''}</div>`;
 }
 // Countdown for the hero marker while a tier change is pending (see CONFIRMED_TIER above).
+function asOfLine(id){
+  const m = {meterYC:['Live reading as of', ASOF_YC], meterPE:['Live reading as of', ASOF_PE], meterEY:['Live reading uses 10Y yield as of', ASOF_ECY]}[id];
+  return m ? `<div class="meter-asof">${m[0]} ${m[1]}</div>` : '';
+}
 function pendingCountdown(){
   if(!PENDING_TIER || PENDING_TIER === CONFIRMED_TIER) return '';
   const left = Math.ceil((new Date(PENDING_SINCE_ISO).getTime() + 14*86400000 - Date.now()) / 86400000);
@@ -502,7 +511,7 @@ function renderMeterContinuous(containerId, score){
   let segs = ORDER.map(l=>`<div class="seg" style="background:${TIER_COLOR[l]}"></div>`).join('');
   el.innerHTML = `<div class="meter-track">${segs}</div>
     <div class="meter-marker" style="left:${pct}%"></div>${liveTag(pct)}
-    <div class="meter-scale"><span>F</span><span>E</span><span>D</span><span>C</span><span>B</span><span>A</span><span>S</span></div>${containerId==='heroMeter' ? pendingCountdown() : ''}`;
+    <div class="meter-scale"><span>F</span><span>E</span><span>D</span><span>C</span><span>B</span><span>A</span><span>S</span></div>${containerId==='heroMeter' ? pendingCountdown() : ''}${asOfLine(containerId)}`;
 }
 function nearestTier(score){ return ORDER[Math.max(0,Math.min(6,Math.round(score)-1))]; }
 

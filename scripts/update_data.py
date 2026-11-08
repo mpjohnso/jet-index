@@ -37,6 +37,9 @@ FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
 TIER_HOLD_DAYS = 14  # a new tier must persist longer than this before it becomes official
 MULTPL_PE = "https://www.multpl.com/shiller-pe"
 
+# As-of labels for each input, filled in by the fetchers and written into index.html.
+ASOF = {"YC": None, "PE": None, "ECY": None}
+
 
 def fetch_fred_latest(series):
     """Return the most recent non-missing value for a FRED series, or None."""
@@ -80,6 +83,9 @@ def fetch_multpl_pe():
             print("[warn] Could not find the current Shiller PE on multpl.com")
             return None
         val = float(mm.group(1))
+        ts = re.search(r"\d{1,2}:\d{2}\s*[AP]M\s*[A-Z]{2,4},\s*\w{3}\s+(\w{3}\s+\d{1,2})", text)
+        if ts:
+            ASOF["PE"] = ts.group(1) + " close"
         if not (5 <= val <= 80):
             print(f"[warn] multpl Shiller PE {val} is outside the sane range 5-80; ignoring")
             return None
@@ -123,6 +129,8 @@ def compute_ecy(cape):
             print("[warn] No CPI value ten years before", latest_cpi_date)
             return None
         inflation = ((cpi[latest_cpi_date] / then) ** (1 / 10) - 1) * 100
+        d = datetime.strptime(dgs10[-1][0], "%Y-%m-%d")
+        ASOF["ECY"] = f"{d.strftime('%b')} {d.day}"  # date of the 10Y Treasury yield used
         real_yield = dgs10[-1][1] - inflation
         ecy = 100.0 / cape - real_yield
         if not (-6 <= ecy <= 12):
@@ -141,6 +149,11 @@ def main():
         html = f.read()
 
     yc = fetch_fred_latest("T10Y2YM")
+    try:
+        _d = datetime.strptime(fetch_fred_rows("T10Y2YM")[-1][0], "%Y-%m-%d")
+        ASOF["YC"] = f"{_d.strftime('%b %Y')} monthly avg"
+    except Exception as e:
+        print(f"[warn] could not determine yield-curve as-of date: {e}")
     credit = fetch_fred_latest("BAA10Y")
     cape = fetch_multpl_pe()
     ecy = compute_ecy(cape)
@@ -253,6 +266,9 @@ def main():
         print("[warn] Could not find the tail of the `monthly` array; leaving history untouched.")
 
     # --- Always stamp the "data checked" timestamp on a successful run ---
+    for key, val in (("ASOF_YC", ASOF["YC"]), ("ASOF_PE", ASOF["PE"]), ("ASOF_ECY", ASOF["ECY"])):
+        if val:
+            html = re.sub(rf"const {key} = '[^']*';", f"const {key} = '{val}';", html)
     for key, val in (("CONFIRMED_TIER", confirmed), ("PREV_CONFIRMED_TIER", prev_confirmed),
                      ("PENDING_TIER", pending), ("PENDING_SINCE_ISO", pending_since)):
         html, n = re.subn(rf"const {key} = '[^']*';", f"const {key} = '{val}';", html)
