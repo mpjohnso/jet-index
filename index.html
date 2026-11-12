@@ -9,14 +9,14 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="JET Index">
 <meta property="og:title" content="JET Index &mdash; U.S. market valuation gauge">
-<meta property="og:description" content="Current reading: E tier (poor), 2.62 / 7 as of November 2026. A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield.">
+<meta property="og:description" content="Current reading: E tier (poor), 2.25 / 7 as of November 2026. A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield.">
 <meta property="og:url" content="https://jetindx.com/">
 <meta property="og:image" content="https://jetindx.com/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="JET Index &mdash; U.S. market valuation gauge">
-<meta name="twitter:description" content="Current reading: E tier (poor), 2.62 / 7 as of November 2026. A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield.">
+<meta name="twitter:description" content="Current reading: E tier (poor), 2.25 / 7 as of November 2026. A U.S. market-valuation gauge combining the yield curve, Shiller PE, and Excess CAPE Yield.">
 <meta name="twitter:image" content="https://jetindx.com/og-image.png">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -352,7 +352,7 @@
     <svg class="card-mark" viewBox="0 0 1147 1147" aria-hidden="true"><use href="#brandmark"></use></svg>
     <div class="metric-top">
       <div class="metric-name">Shiller PE (CAPE)</div>
-      <div class="metric-value-wrap"><span class="metric-value mono">39.7</span><span class="tier-chip" id="chipPE"></span></div>
+      <div class="metric-value-wrap"><span class="metric-value mono">40.2</span><span class="tier-chip" id="chipPE"></span></div>
     </div>
     <div class="momentum" id="momPE"></div>
     <div class="momentum since-update" id="sincePE"></div>
@@ -434,8 +434,8 @@
 </div>
 
 <script>
-const LAST_CHECKED_ISO = '2026-11-11T18:48:25Z';
-const LAST_CHANGED_ISO = '2026-11-11T18:48:25Z';
+const LAST_CHECKED_ISO = '2026-11-12T19:00:08Z';
+const LAST_CHANGED_ISO = '2026-11-12T19:00:08Z';
 // The composite actually moved D -> E in May 2026 per the monthly backtest data (monthly
 // resolution only, so this is pinned to the 1st of that month, not an exact day) -- NOT on
 // LAST_CHANGED_ISO's date, which was a stale bootstrap placeholder left over from before this
@@ -447,12 +447,12 @@ const LAST_TIER_CHANGE_ISO = '2026-05-01T00:00:00Z';
 // shown up but not yet earned confirmation (empty when the live score agrees with CONFIRMED_TIER).
 // "As of" labels for each input's live reading (written by scripts/update_data.py).
 const ASOF_YC = 'Oct 2026 monthly avg';
-const ASOF_PE = 'Nov 10 close';
+const ASOF_PE = 'Nov 11 close';
 const ASOF_ECY = 'Nov 9';
 const CONFIRMED_TIER = 'E';
 const PREV_CONFIRMED_TIER = 'D';
-const PENDING_TIER = 'D';
-const PENDING_SINCE_ISO = '2026-11-06T18:08:54Z';
+const PENDING_TIER = '';
+const PENDING_SINCE_ISO = '';
 const TIER_COLOR = {S:'#e0473d',A:'#ef8f1e',B:'#f3cf3d',C:'#4fae59',D:'#63b8de',E:'#2f6fb0',F:'#c92f86'};
 const TIER_TEXT  = {S:'#fff',A:'#fff',B:'#2b2200',C:'#fff',D:'#0b2733',E:'#fff',F:'#fff'};
 const ORDER = ['F','E','D','C','B','A','S']; // worst -> best, left -> right
@@ -545,11 +545,11 @@ function continuousMetricScore(value, breakpoints, descending){
 }
 
 // Current reading, computed live from the real current inputs (same values as the metric cards)
-const CURRENT_YC = 0.39, CURRENT_PE = 39.7, CURRENT_ECY = 1.03;
+const CURRENT_YC = 0.39, CURRENT_PE = 40.24, CURRENT_ECY = 1.0;
 // What each input was immediately before the most recent change -- lets the page show
 // whether that specific input moved favorably or unfavorably, independent of the 3-month
 // momentum trend below. Bootstrap: equal to CURRENT_* until the next real change.
-const PREV_YC = 0.39, PREV_PE = 39.85, PREV_ECY = 1.04;
+const PREV_YC = 0.39, PREV_PE = 39.7, PREV_ECY = 1.03;
 const heroScore = composite(CURRENT_YC, CURRENT_PE, CURRENT_ECY);
 const heroTier = CONFIRMED_TIER;  // official tier, debounced 14 days (see CONFIRMED_TIER above)
 document.getElementById('heroScoreText').textContent = `weighted score ${heroScore.toFixed(2)} / 7`;
@@ -1077,7 +1077,7 @@ const monthly = [
   ['2025-10',0.54,39.21,1.67,1.68],['2025-11',0.54,39.15,1.63,1.77],['2025-12',0.64,39.58,1.59,1.76],
   ['2026-01',0.67,39.64,1.53,1.67],['2026-02',0.66,39.01,1.69,1.68],['2026-03',0.54,37.03,1.77,1.79],
   ['2026-04',0.52,38.14,1.66,1.71],['2026-05',0.48,40.27,1.39,1.62],['2026-06',0.36,40.15,1.34,1.53],
-  ['2026-07',0.38,40.01,1.23,1.59],['2026-08',0.46,41.12,1.07,1.64],['2026-09',0.46,40.58,1.01,1.46],['2026-10',0.34,40.13,0.89,1.49],['2026-11',0.39,39.7,1.03,1.51]
+  ['2026-07',0.38,40.01,1.23,1.59],['2026-08',0.46,41.12,1.07,1.64],['2026-09',0.46,40.58,1.01,1.46],['2026-10',0.34,40.13,0.89,1.49],['2026-11',0.39,40.24,1.0,1.51]
 ];
 // Rarity: how many of the real backtested months (monthly.length, computed below as
 // totalMonths) landed in each tier, so a viewer can see at a glance whether today's
